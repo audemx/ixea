@@ -91,3 +91,10 @@ nbproject/
 /public/hot/
 /public/storage
 dist/
+
+# ==========================================
+# 8. OTROS
+# ==========================================
+src/app/db/models/*
+src/app/db/sys-data.sql
+src/public/eros_old/

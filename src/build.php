@@ -16,8 +16,15 @@ echo str_repeat("=", 60) . "\n\n";
 // --- PASO 1: Recrear la Base de Datos con Docker ---
 echo "📦 Paso 1: Recreando Base de Datos 'ixea_db' e importando schema.sql...\n";
 
-$schemaSqlPath = __DIR__ . '/app/db/schema.sql';
-$dbResetCommand = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. -e "DROP DATABASE IF EXISTS ixea_db; CREATE DATABASE ixea_db;" && docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . $schemaSqlPath;
+$dbPath = __DIR__ . '/app/db';
+$schemaPath = $dbPath . '/schema.sql';
+$sysDataPath = $dbPath . '/sys-data.sql';
+
+$dockerReset = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. -e "DROP DATABASE IF EXISTS ixea_db; CREATE DATABASE ixea_db;"';
+$dockerCreate = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . $schemaPath;
+$dockerFill = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . $sysDataPath;
+
+$dbResetCommand = $dockerReset . ' && ' . $dockerCreate . ' && ' . $dockerFill;
 
 exec($dbResetCommand, $outputDb, $returnDb);
 

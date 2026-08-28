@@ -38,4 +38,6 @@
 
 ## 3. Arquitectura del Sistema
 
-Toda la arquitectura puede encontrarse en `structure.txt`.
+Puede encontrarse la arquitectura del sistema en la siguiente documentación:
+
+* `structure.txt` : Describe la estructura de archivos y carpetas del proyecto.

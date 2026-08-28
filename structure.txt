@@ -1,5 +1,4 @@
 .
-├── .gitignore
 ├── dev-log.md
 ├── docker-compose.yml
 ├── Dockerfile
@@ -8,7 +7,6 @@
 │   └── project_context.md
 ├── src
 │   ├── app
-│   │   ├── .env
 │   │   ├── access
 │   │   │   ├── login-handler.php
 │   │   │   ├── login.php
@@ -85,7 +83,6 @@
 │   ├── gen-models.php
 │   ├── gen-schema-json.php
 │   └── public
-│       ├── .htaccess
 │       ├── about
 │       │   └── eros.php
 │       ├── ai-lab
@@ -98,10 +95,137 @@
 │       │       └── eros-widgets.mp4
 │       ├── default.php
 │       ├── eros
-│       │   ├── .htaccess
 │       │   ├── includes
 │       │   │   └── isotipo.php
 │       │   └── index.php
+│       ├── eros_old
+│       │   ├── access
+│       │   │   ├── login_handler.php
+│       │   │   ├── login.php
+│       │   │   └── logout.php
+│       │   ├── api
+│       │   │   ├── auxiliary-functions.php
+│       │   │   ├── back-functions.php
+│       │   │   ├── cron-cleaner.php
+│       │   │   ├── get-data.php
+│       │   │   ├── gmail
+│       │   │   │   ├── get-refresh-token.php
+│       │   │   │   └── save-token.php
+│       │   │   ├── kpi-functions.php
+│       │   │   ├── logs-functions.php
+│       │   │   ├── post-handler.php
+│       │   │   └── validation-functions.php
+│       │   ├── archived
+│       │   │   ├── fix_daily_sales.php
+│       │   │   └── fix_expenses_tax.php
+│       │   ├── assets
+│       │   │   ├── css
+│       │   │   │   ├── apps.css
+│       │   │   │   ├── docks.css
+│       │   │   │   ├── main.css
+│       │   │   │   ├── menu.css
+│       │   │   │   ├── stages.css
+│       │   │   │   └── widgets.css
+│       │   │   └── js
+│       │   │       ├── apps
+│       │   │       │   ├── catalogs.js
+│       │   │       │   ├── checker.js
+│       │   │       │   ├── credit.js
+│       │   │       │   ├── customers.js
+│       │   │       │   ├── dispatch.js
+│       │   │       │   ├── finance.js
+│       │   │       │   ├── payments.js
+│       │   │       │   ├── pos.js
+│       │   │       │   ├── purchases.js
+│       │   │       │   ├── receipt.js
+│       │   │       │   ├── reports.js
+│       │   │       │   ├── stock.js
+│       │   │       │   ├── suppliers.js
+│       │   │       │   ├── till.js
+│       │   │       │   └── users.js
+│       │   │       ├── os-apis.js
+│       │   │       ├── os-kernel.js
+│       │   │       ├── os-ui.js
+│       │   │       └── os-widgets.js
+│       │   ├── config.php
+│       │   ├── database.php
+│       │   ├── face_models_api
+│       │   │   ├── face_landmark_68_model-shard1
+│       │   │   ├── face_landmark_68_model-weights_manifest.json
+│       │   │   ├── face_recognition_model-shard1
+│       │   │   ├── face_recognition_model-shard2
+│       │   │   ├── face_recognition_model-weights_manifest.json
+│       │   │   ├── face-api.min.js
+│       │   │   ├── tiny_face_detector_model-shard1
+│       │   │   └── tiny_face_detector_model-weights_manifest.json
+│       │   ├── includes
+│       │   │   ├── dock-main.php
+│       │   │   ├── dock-widgets.php
+│       │   │   ├── header.php
+│       │   │   ├── isotipo.php
+│       │   │   ├── menu-bar.php
+│       │   │   ├── scripts.php
+│       │   │   ├── stage-manager.php
+│       │   │   ├── widgets
+│       │   │   │   ├── calc.php
+│       │   │   │   ├── calendar.php
+│       │   │   │   ├── notes-processor.php
+│       │   │   │   └── notes.php
+│       │   │   └── widgets-panel.php
+│       │   ├── index.php
+│       │   ├── manifest.json
+│       │   ├── modules
+│       │   │   ├── admin
+│       │   │   │   ├── catalog-management.php
+│       │   │   │   └── catalogs.php
+│       │   │   ├── credit
+│       │   │   │   ├── credit-operations.php
+│       │   │   │   ├── credit-statement-ticket.php
+│       │   │   │   └── credit.php
+│       │   │   ├── customers
+│       │   │   │   └── customers.php
+│       │   │   ├── finance
+│       │   │   │   ├── finance-handler.php
+│       │   │   │   └── finance.php
+│       │   │   ├── inventory
+│       │   │   │   ├── stock-handler.php
+│       │   │   │   └── stock.php
+│       │   │   ├── payments
+│       │   │   │   ├── payment-handler.php
+│       │   │   │   └── payments.php
+│       │   │   ├── purchases
+│       │   │   │   ├── confirm-receipt.php
+│       │   │   │   ├── mail-purchase-order.php
+│       │   │   │   ├── pdf-purchase.php
+│       │   │   │   ├── purchase-handler.php
+│       │   │   │   ├── purchase-ticket.php
+│       │   │   │   ├── purchases.php
+│       │   │   │   └── receipt.php
+│       │   │   ├── reports
+│       │   │   │   ├── finance.php
+│       │   │   │   ├── reports.php
+│       │   │   │   └── sales-report-controller.php
+│       │   │   ├── rrhh
+│       │   │   │   ├── checker-handler.php
+│       │   │   │   └── checker.php
+│       │   │   ├── sales
+│       │   │   │   ├── dispatch-operations.php
+│       │   │   │   ├── dispatch.php
+│       │   │   │   ├── pos.php
+│       │   │   │   ├── process-sale.php
+│       │   │   │   ├── sale-ticket.php
+│       │   │   │   └── validate_cart_stock.php
+│       │   │   ├── suppliers
+│       │   │   │   └── suppliers.php
+│       │   │   ├── till
+│       │   │   │   ├── till-operations.php
+│       │   │   │   └── till.php
+│       │   │   └── users
+│       │   │       ├── user-handler.php
+│       │   │       └── users.php
+│       │   ├── ping.txt
+│       │   ├── security.php
+│       │   └── sw.js
 │       ├── includes
 │       │   ├── brandbar.php
 │       │   ├── footer.php
@@ -116,4 +240,4 @@
 │       └── styles.css
 └── structure.txt
 
-20 directories, 97 files
+46 directories, 195 files
