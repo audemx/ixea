@@ -1,0 +1,21 @@
+# 1. DEFINIR INDEX PREDETERMINADO
+DirectoryIndex index.php
+
+# 2. EVITAR EL LISTADO DIRECTO DE CARPETAS
+Options -Indexes
+
+# 3. ACTIVAR EL MOTOR DE REESCRITURA
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 4. FORZAR HTTPS SOLO EN PRODUCCIÓN
+    RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 5. FRONT CONTROLLER
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

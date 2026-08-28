@@ -1,0 +1,4689 @@
+{
+    "$schema_version": "1.0",
+    "created_at": "2026-08-28 09:58:01",
+    "database_context": {
+        "name": "ixea_db",
+        "engine": "MariaDB\/MySQL",
+        "description": "Axiom: Base de datos motor de Ixea EROS",
+        "total_tables": 44
+    },
+    "entities": [
+        {
+            "table_name": "bank_accounts",
+            "business_purpose": "Registro de cuentas bancarias",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "beneficiary_name",
+                    "type": "varchar(255)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del beneficiario"
+                },
+                {
+                    "name": "bank_name",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del banco"
+                },
+                {
+                    "name": "account_number",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Número de cuenta"
+                },
+                {
+                    "name": "clabe",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Clave bancaria estandarizada"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de la última actualización"
+                }
+            ],
+            "relationships": []
+        },
+        {
+            "table_name": "permissions",
+            "business_purpose": "Registro de permisos de usuarios",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "key",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Clave del permiso"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del permiso"
+                },
+                {
+                    "name": "module",
+                    "type": "varchar(50)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Módulo al que pertenece el permiso"
+                }
+            ],
+            "relationships": []
+        },
+        {
+            "table_name": "roles",
+            "business_purpose": "Registro de roles del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo code."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo description."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": []
+        },
+        {
+            "table_name": "system_colors",
+            "business_purpose": "Registro de colores del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del color"
+                },
+                {
+                    "name": "hex",
+                    "type": "varchar(7)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código hexadecimal del color"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del color"
+                }
+            ],
+            "relationships": []
+        },
+        {
+            "table_name": "tax_profiles",
+            "business_purpose": "Registro de información fiscal",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "rfc",
+                    "type": "varchar(13)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo rfc."
+                },
+                {
+                    "name": "company_name",
+                    "type": "varchar(150)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo company name."
+                },
+                {
+                    "name": "tax_regime",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo tax regime."
+                },
+                {
+                    "name": "billing_email",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo billing email."
+                },
+                {
+                    "name": "address_street",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address street."
+                },
+                {
+                    "name": "address_ext_num",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address ext num."
+                },
+                {
+                    "name": "address_int_num",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address int num."
+                },
+                {
+                    "name": "address_neighborhood",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address neighborhood."
+                },
+                {
+                    "name": "address_city",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address city."
+                },
+                {
+                    "name": "address_state",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address state."
+                },
+                {
+                    "name": "address_zip",
+                    "type": "varchar(10)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo address zip."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": []
+        },
+        {
+            "table_name": "apps",
+            "business_purpose": "Catálogo de aplicaciones del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código único de la app"
+                },
+                {
+                    "name": "title",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre visible de la app"
+                },
+                {
+                    "name": "permission_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relación con el permiso requerido"
+                },
+                {
+                    "name": "icon",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Clase del icono Bootstrap"
+                },
+                {
+                    "name": "color_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relación con system_colors"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 3=suspended, 5=archived"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "color_id",
+                    "referenced_table": "system_colors",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_apps_colors"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "permission_id",
+                    "referenced_table": "permissions",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_apps_permissions"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_apps_status"
+                }
+            ]
+        },
+        {
+            "table_name": "accounts",
+            "business_purpose": "Registro de cuentas contables globales",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código de la cuenta"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la cuenta"
+                },
+                {
+                    "name": "balance_type",
+                    "type": "enum('asset','liability')",
+                    "nullable": false,
+                    "default": "'asset'",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de balance"
+                },
+                {
+                    "name": "account_type",
+                    "type": "enum('cash','bank','receivable','fixed','credit_card','loan','payable','virtual')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de cuenta"
+                },
+                {
+                    "name": "balance",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Saldo de la cuenta"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_accounts_status"
+                }
+            ]
+        },
+        {
+            "table_name": "areas",
+            "business_purpose": "Registro de areas físicas o distribución de espacios",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del area"
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del area"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_areas_status"
+                }
+            ]
+        },
+        {
+            "table_name": "attendance",
+            "business_purpose": "Registro de asistencia de usuarios",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "ID único autoincremental no nulo positivo"
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Usuario que realiza el registro"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('in','out')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de registro"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora del registro"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_attendance_user"
+                }
+            ]
+        },
+        {
+            "table_name": "batches",
+            "business_purpose": "Registro de lotes de productos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "barcode",
+                    "type": "varchar(50)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código de barras"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('product','production')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de lote"
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto lotificado"
+                },
+                {
+                    "name": "initial_stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock inicial"
+                },
+                {
+                    "name": "stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock actual"
+                },
+                {
+                    "name": "expires_on",
+                    "type": "date",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha de caducidad"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_batches_product"
+                }
+            ]
+        },
+        {
+            "table_name": "brands",
+            "business_purpose": "Registro de marcas de productos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la marca"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_brands_status"
+                }
+            ]
+        },
+        {
+            "table_name": "categories",
+            "business_purpose": "Registro de categorías de productos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción de la categoría"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_categories_status"
+                }
+            ]
+        },
+        {
+            "table_name": "customer_credit_payments",
+            "business_purpose": "Registro de pagos de créditos de clientes",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de clientes"
+                },
+                {
+                    "name": "is_taxable",
+                    "type": "tinyint(1)",
+                    "nullable": false,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Indica si el cliente solicitó factura"
+                },
+                {
+                    "name": "tax",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuesto del pago"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto del pago"
+                },
+                {
+                    "name": "concept",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Concepto del pago: Indica folio de ventas relacionadas"
+                },
+                {
+                    "name": "shift_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de turnos"
+                },
+                {
+                    "name": "method_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de métodos de pago"
+                },
+                {
+                    "name": "reference",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Referencia del pago"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "13",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 9=cancelled, 10=returned, 13=applied"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "customer_id",
+                    "referenced_table": "customers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_payments_customer"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "method_id",
+                    "referenced_table": "payment_methods",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_payments_method"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "shift_id",
+                    "referenced_table": "shifts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_payments_shift"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_payments_status"
+                }
+            ]
+        },
+        {
+            "table_name": "customer_credit_profiles",
+            "business_purpose": "Registro de perfiles de crédito de clientes",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de clientes"
+                },
+                {
+                    "name": "credit_limit",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "2000.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Límite de crédito"
+                },
+                {
+                    "name": "credit_days",
+                    "type": "int(11)",
+                    "nullable": true,
+                    "default": "30",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Días de crédito"
+                },
+                {
+                    "name": "current_score",
+                    "type": "int(11)",
+                    "nullable": true,
+                    "default": "100",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Puntaje de crédito"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "customer_id",
+                    "referenced_table": "customers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_profiles_customer"
+                }
+            ]
+        },
+        {
+            "table_name": "customer_credit_sales",
+            "business_purpose": "Registro de ventas a crédito",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de clientes"
+                },
+                {
+                    "name": "sale_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de ventas"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto del crédito"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "6",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 6=pending, 7=paid, 9=cancelled"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "customer_id",
+                    "referenced_table": "customers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_sales_customer"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "sale_id",
+                    "referenced_table": "sales",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_sales_sale"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_sales_status"
+                }
+            ]
+        },
+        {
+            "table_name": "customers",
+            "business_purpose": "Registro de clientes",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "email",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo email."
+                },
+                {
+                    "name": "phone",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo phone."
+                },
+                {
+                    "name": "birthdate",
+                    "type": "date",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo birthdate."
+                },
+                {
+                    "name": "gender",
+                    "type": "enum('male','female')",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Género del cliente"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 2=Inactive, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "credit_status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "2",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 2=Inactive, 3=Suspended"
+                },
+                {
+                    "name": "tax_profile_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de registros fiscales"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "credit_status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_cc_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "tax_profile_id",
+                    "referenced_table": "tax_profiles",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_customers_rfc"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_customers_status"
+                }
+            ]
+        },
+        {
+            "table_name": "departments",
+            "business_purpose": "Registro de departamentos (operativos)",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del departamento"
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del departamento"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_departments_status"
+                }
+            ]
+        },
+        {
+            "table_name": "expense_categories",
+            "business_purpose": "Registro de categorías de gastos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código de la categoría"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la categoría"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción de la categoría"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expense_categories_status"
+                }
+            ]
+        },
+        {
+            "table_name": "expenses",
+            "business_purpose": "Registro de gastos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Usuario que registra el gasto"
+                },
+                {
+                    "name": "category_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Categoría del gasto"
+                },
+                {
+                    "name": "account_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Cuenta contable que afecta"
+                },
+                {
+                    "name": "method_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Método de pago"
+                },
+                {
+                    "name": "is_taxable",
+                    "type": "tinyint(1)",
+                    "nullable": false,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Indica si se generó factura"
+                },
+                {
+                    "name": "tax",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuesto del gasto"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto del gasto"
+                },
+                {
+                    "name": "concept",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Concepto detallado del gasto"
+                },
+                {
+                    "name": "reference",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Referencia de pago"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "6",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 6=pending, 7=paid, 9=cancelled, 10=returned"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "paid_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo paid at."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "account_id",
+                    "referenced_table": "accounts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expenses_account"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "category_id",
+                    "referenced_table": "expense_categories",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expenses_category"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "method_id",
+                    "referenced_table": "payment_methods",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expenses_method"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expenses_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_expenses_user"
+                }
+            ]
+        },
+        {
+            "table_name": "finance_snapshots",
+            "business_purpose": "Registro de estados financieros globales del negocio",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de usuarios"
+                },
+                {
+                    "name": "liquidity",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Liquidez del negocio"
+                },
+                {
+                    "name": "receivable",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cuentas por cobrar"
+                },
+                {
+                    "name": "loans",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Préstamos"
+                },
+                {
+                    "name": "payable",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cuentas por pagar"
+                },
+                {
+                    "name": "liability",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Pasivos"
+                },
+                {
+                    "name": "income",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Ingresos"
+                },
+                {
+                    "name": "expenses",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Gastos"
+                },
+                {
+                    "name": "payments",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Pagos"
+                },
+                {
+                    "name": "profit",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Utilidad"
+                },
+                {
+                    "name": "inventory",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Inventario"
+                },
+                {
+                    "name": "worth",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Patrimonio"
+                },
+                {
+                    "name": "dividend",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Dividendos"
+                },
+                {
+                    "name": "tax_income",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuestos sobre ingresos"
+                },
+                {
+                    "name": "tax_daily",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuestos de factura global"
+                },
+                {
+                    "name": "tax_expenses",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuestos sobre gastos"
+                },
+                {
+                    "name": "tax_payments",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuestos sobre pagos"
+                },
+                {
+                    "name": "tax_profit",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuestos sobre utilidades"
+                },
+                {
+                    "name": "iva_in",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "IVA de ingresos"
+                },
+                {
+                    "name": "iva_out",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "IVA de gastos"
+                },
+                {
+                    "name": "iva_net",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "IVA neto"
+                },
+                {
+                    "name": "isr",
+                    "type": "decimal(15,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo isr."
+                },
+                {
+                    "name": "period",
+                    "type": "date",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo period."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_finance_user"
+                }
+            ]
+        },
+        {
+            "table_name": "ledgers",
+            "business_purpose": "Registro de transacciones contables globales",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "account_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de cuentas contables"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('in','out')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de transacción"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto de la transacción"
+                },
+                {
+                    "name": "concept",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Concepto de la transacción"
+                },
+                {
+                    "name": "table_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de referencia"
+                },
+                {
+                    "name": "record_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID de la referencia"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "account_id",
+                    "referenced_table": "accounts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_ledger_account"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "table_id",
+                    "referenced_table": "system_tables",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_ledger_systable"
+                }
+            ]
+        },
+        {
+            "table_name": "menu",
+            "business_purpose": "Registro de la carta o menú del restaurante o negocio de comidas",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del item"
+                },
+                {
+                    "name": "category_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de categorías"
+                },
+                {
+                    "name": "area_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de áreas"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del item"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 3=suspended, 4=discontinued, 5=archived"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "area_id",
+                    "referenced_table": "areas",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_menu_area"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "category_id",
+                    "referenced_table": "categories",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_menu_category"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_menu_status"
+                }
+            ]
+        },
+        {
+            "table_name": "payment_methods",
+            "business_purpose": "Registro de métodos de pago",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(20)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código del método de pago"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del método de pago"
+                },
+                {
+                    "name": "account_in",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Cuenta contable de ingreso"
+                },
+                {
+                    "name": "account_out",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Cuenta contable de egreso"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "account_in",
+                    "referenced_table": "accounts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_payment_account_in"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "account_out",
+                    "referenced_table": "accounts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_payment_account_out"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_payment_status"
+                }
+            ]
+        },
+        {
+            "table_name": "product_units",
+            "business_purpose": "Registro de unidades de compra, venta y conversión de los productos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "barcode",
+                    "type": "varchar(50)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código de barras"
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de medida"
+                },
+                {
+                    "name": "factor",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "1.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Factor de conversión (Si es 1, es la unidad de medida base)"
+                },
+                {
+                    "name": "price",
+                    "type": "decimal(12,4)",
+                    "nullable": true,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Precio de venta"
+                },
+                {
+                    "name": "cost",
+                    "type": "decimal(12,4)",
+                    "nullable": true,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Precio de compra"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('both','buy','sell')",
+                    "nullable": false,
+                    "default": "'buy'",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de uso de la unidad"
+                },
+                {
+                    "name": "supplier_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de proveedores"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_unit_master"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_unit_product"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "supplier_id",
+                    "referenced_table": "suppliers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_unit_supplier"
+                }
+            ]
+        },
+        {
+            "table_name": "production",
+            "business_purpose": "Registro productos elaborados en producción",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "category_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Categoría del producto"
+                },
+                {
+                    "name": "sku",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código del producto"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(200)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del producto"
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del producto"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de medida"
+                },
+                {
+                    "name": "stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad actual"
+                },
+                {
+                    "name": "min_stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock mínimo"
+                },
+                {
+                    "name": "max_stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock máximo"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 2=inactive, 3=suspended, 4=discontinued, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "category_id",
+                    "referenced_table": "categories",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_production_category"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_production_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_production_unit"
+                }
+            ]
+        },
+        {
+            "table_name": "products",
+            "business_purpose": "Registro de productos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "category_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Categoría del producto"
+                },
+                {
+                    "name": "brand_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Marca del producto"
+                },
+                {
+                    "name": "sku",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código del producto"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(200)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del producto"
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del producto"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de medida"
+                },
+                {
+                    "name": "is_taxable",
+                    "type": "tinyint(1)",
+                    "nullable": true,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Incluye impuestos"
+                },
+                {
+                    "name": "stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock actual"
+                },
+                {
+                    "name": "min_stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock mínimo"
+                },
+                {
+                    "name": "max_stock",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": "0.0000",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Stock máximo"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 2=inactive, 3=suspended, 4=discontinued, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "brand_id",
+                    "referenced_table": "brands",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_prod_brand"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "category_id",
+                    "referenced_table": "categories",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_prod_category"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_product_main_unit"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_product_status"
+                }
+            ]
+        },
+        {
+            "table_name": "purchase_details",
+            "business_purpose": "Registro de detalles de compra",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "purchase_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Orden de compra"
+                },
+                {
+                    "name": "item",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Número de ítem"
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de compra"
+                },
+                {
+                    "name": "quantity",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad"
+                },
+                {
+                    "name": "unitary",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Costo unitario"
+                },
+                {
+                    "name": "discount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descuento aplicado"
+                },
+                {
+                    "name": "tax",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuesto"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Total"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_pdetails_product"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "purchase_id",
+                    "referenced_table": "purchases",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_pdetails_purchase"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "product_units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_pdetails_unit"
+                }
+            ]
+        },
+        {
+            "table_name": "purchases",
+            "business_purpose": "Registro de compras",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "folio",
+                    "type": "varchar(20)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código único de la compra"
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de usuarios (quien genera)"
+                },
+                {
+                    "name": "payer_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de usuarios (quien paga)"
+                },
+                {
+                    "name": "handler_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de usuarios (quien recibe)"
+                },
+                {
+                    "name": "supplier_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de proveedores"
+                },
+                {
+                    "name": "is_taxable",
+                    "type": "tinyint(1)",
+                    "nullable": true,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Indica si la compra se facturó"
+                },
+                {
+                    "name": "items",
+                    "type": "int(11)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad de items en la compra"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto total de la compra"
+                },
+                {
+                    "name": "paid_status",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "6",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 6=pending, 7=paid, 9=cancelled, 10=returned"
+                },
+                {
+                    "name": "method_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de métodos de pago"
+                },
+                {
+                    "name": "reference",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Referencia del pago"
+                },
+                {
+                    "name": "received_status",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "6",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 6=pending, 8=received, 9=cancelled, 10=returned"
+                },
+                {
+                    "name": "notes",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Notas de la compra"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "paid_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha del pago"
+                },
+                {
+                    "name": "received_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha de recepción"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "handler_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_handler"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "method_id",
+                    "referenced_table": "payment_methods",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_method"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "paid_status",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_paid_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "payer_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_payer"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "received_status",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_received_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "supplier_id",
+                    "referenced_table": "suppliers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_supplier"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_purchase_user"
+                }
+            ]
+        },
+        {
+            "table_name": "recipes",
+            "business_purpose": "Registro de recetas e insumos",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "type",
+                    "type": "enum('menu','production')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de uso: menu o produccion"
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto (unidad base)"
+                },
+                {
+                    "name": "supply_type",
+                    "type": "enum('product','production')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de materia prima: producto o produccion"
+                },
+                {
+                    "name": "supply_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Materia prima (unidad base)"
+                },
+                {
+                    "name": "quantity",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad de materia prima (unidad base)"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_recipes_product"
+                }
+            ]
+        },
+        {
+            "table_name": "role_permissions",
+            "business_purpose": "Asignación de permisos a roles",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "role_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Rol"
+                },
+                {
+                    "name": "permission_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Permiso"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "permission_id",
+                    "referenced_table": "permissions",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_role_perm_perm"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "role_id",
+                    "referenced_table": "roles",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_role_perm_role"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_role_perm_status"
+                }
+            ]
+        },
+        {
+            "table_name": "sale_details",
+            "business_purpose": "Registro de detalle de ventas",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "sale_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Orden de venta"
+                },
+                {
+                    "name": "item",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Número de ítem"
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de venta"
+                },
+                {
+                    "name": "quantity",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad"
+                },
+                {
+                    "name": "unitary",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Precio unitario"
+                },
+                {
+                    "name": "discount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descuento aplicado"
+                },
+                {
+                    "name": "tax",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Impuesto"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Total"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sdetails_product"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "sale_id",
+                    "referenced_table": "sales",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sdetails_sale"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "product_units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sdetails_unit"
+                }
+            ]
+        },
+        {
+            "table_name": "sales",
+            "business_purpose": "Registro de ventas",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "folio",
+                    "type": "varchar(20)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Código único de la venta"
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Usuario que realizó la venta"
+                },
+                {
+                    "name": "handler_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Usuario que entregó"
+                },
+                {
+                    "name": "customer_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Cliente"
+                },
+                {
+                    "name": "items",
+                    "type": "int(11)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad de productos vendidos"
+                },
+                {
+                    "name": "is_taxable",
+                    "type": "tinyint(1)",
+                    "nullable": true,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Indica si la venta se factura"
+                },
+                {
+                    "name": "discount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descuento aplicado a la venta"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Total de la venta"
+                },
+                {
+                    "name": "shift_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Turno de la venta"
+                },
+                {
+                    "name": "paid_status",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del pago: 6=pending, 7=paid, 9=cancelled, 10=returned"
+                },
+                {
+                    "name": "method_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Método de pago"
+                },
+                {
+                    "name": "reference",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Referencia de pago"
+                },
+                {
+                    "name": "delivered_status",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado de la entrega: 6=pending, 8=delivered, 9=cancelled, 10=returned"
+                },
+                {
+                    "name": "notes",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Notas adicionales de la venta"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "paid_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha del pago"
+                },
+                {
+                    "name": "delivered_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha de la entrega"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "customer_id",
+                    "referenced_table": "customers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sale_customer"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "handler_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sale_handler"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sale_user"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "delivered_status",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sales_delivered"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "method_id",
+                    "referenced_table": "payment_methods",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sales_method"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "paid_status",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sales_paid"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "shift_id",
+                    "referenced_table": "shifts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sales_shift"
+                }
+            ]
+        },
+        {
+            "table_name": "shifts",
+            "business_purpose": "Registro de turnos de cajero",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de usuarios"
+                },
+                {
+                    "name": "opening_time",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha de apertura"
+                },
+                {
+                    "name": "closing_time",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha de cierre"
+                },
+                {
+                    "name": "opening_amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto inicial"
+                },
+                {
+                    "name": "system_amount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Lo que el sistema calcula"
+                },
+                {
+                    "name": "real_amount",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Lo que el cajero cuenta"
+                },
+                {
+                    "name": "notes",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Notas del turno"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_shifts_user"
+                }
+            ]
+        },
+        {
+            "table_name": "statuses",
+            "business_purpose": "Tabla para el registro de estados transaccionales",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del estado"
+                },
+                {
+                    "name": "color",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Color asociado al estado"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "color",
+                    "referenced_table": "system_colors",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_statuses_color"
+                }
+            ]
+        },
+        {
+            "table_name": "stock_movements",
+            "business_purpose": "Registro de movimientos de stock",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "bigint(20) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "product_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Producto"
+                },
+                {
+                    "name": "quantity",
+                    "type": "decimal(12,4)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Cantidad en unidad principal"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('in','out')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de movimiento"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Unidad de referencia"
+                },
+                {
+                    "name": "table_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona con la tabla system_tables"
+                },
+                {
+                    "name": "record_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID del registro origen"
+                },
+                {
+                    "name": "batch_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "ID del lote"
+                },
+                {
+                    "name": "notes",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Notas"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha del movimiento"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "batch_id",
+                    "referenced_table": "batches",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_stockmove_batch"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "product_id",
+                    "referenced_table": "products",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_stockmove_product"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "table_id",
+                    "referenced_table": "system_tables",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_stockmove_systable"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "unit_id",
+                    "referenced_table": "product_units",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_stockmove_unit"
+                }
+            ]
+        },
+        {
+            "table_name": "supplier_credit_profiles",
+            "business_purpose": "Registro de perfiles de crédito de proveedores",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "supplier_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Clave foránea hacia la entidad referenciada."
+                },
+                {
+                    "name": "credit_limit",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "10000.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo credit limit."
+                },
+                {
+                    "name": "credit_days",
+                    "type": "int(11)",
+                    "nullable": true,
+                    "default": "30",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo credit days."
+                },
+                {
+                    "name": "current_score",
+                    "type": "int(11)",
+                    "nullable": true,
+                    "default": "100",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo current score."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "supplier_id",
+                    "referenced_table": "suppliers",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_scp_supplier"
+                }
+            ]
+        },
+        {
+            "table_name": "suppliers",
+            "business_purpose": "Registro de proveedores",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "email",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo email."
+                },
+                {
+                    "name": "phone",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo phone."
+                },
+                {
+                    "name": "tax_profile_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Clave foránea hacia la entidad referenciada."
+                },
+                {
+                    "name": "delivery_days",
+                    "type": "int(11)",
+                    "nullable": true,
+                    "default": "7",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo delivery days."
+                },
+                {
+                    "name": "bank_account",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Clave foránea hacia la entidad referenciada."
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado del registro: 1=active, 2=inactive, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "bank_account",
+                    "referenced_table": "bank_accounts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_supplier_bank"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "tax_profile_id",
+                    "referenced_table": "tax_profiles",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_supplier_rfc"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_supplier_status"
+                }
+            ]
+        },
+        {
+            "table_name": "system_actions",
+            "business_purpose": "Registro de acciones del sistema que puede realizar un usuario",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la acción"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus de la acción: 1=active, 2=inactive, 3=suspended, 5=archived"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_system_actions_status"
+                }
+            ]
+        },
+        {
+            "table_name": "system_logs",
+            "business_purpose": "Registro de bitácora del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona con la tabla users"
+                },
+                {
+                    "name": "action_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona con la tabla system_actions"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del proceso 14=success, 15=error"
+                },
+                {
+                    "name": "details",
+                    "type": "longtext",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo details."
+                },
+                {
+                    "name": "table_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona con la tabla system_tables"
+                },
+                {
+                    "name": "record_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID de la referencia"
+                },
+                {
+                    "name": "ip_address",
+                    "type": "varchar(45)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo ip address."
+                },
+                {
+                    "name": "user_agent",
+                    "type": "varchar(512)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo user agent."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "action_id",
+                    "referenced_table": "system_actions",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_logs_action"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_logs_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "table_id",
+                    "referenced_table": "system_tables",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_logs_systable"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_logs_user"
+                }
+            ]
+        },
+        {
+            "table_name": "system_tables",
+            "business_purpose": "Registro de todas las tablas del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la tabla"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus de la tabla: 1=active, 2=inactive, 4=discontinued, 5=archived"
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_sys_tables_status"
+                }
+            ]
+        },
+        {
+            "table_name": "tables",
+            "business_purpose": "Registro de mesas de servicio",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre de la mesa o entidad"
+                },
+                {
+                    "name": "area_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de areas"
+                },
+                {
+                    "name": "capacity",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "4",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Capacidad de personas"
+                },
+                {
+                    "name": "use_status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "12",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estado de uso: 11=open, 12=closed"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "area_id",
+                    "referenced_table": "areas",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tables_area"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tables_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "use_status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tables_use_status"
+                }
+            ]
+        },
+        {
+            "table_name": "till_movements",
+            "business_purpose": "Movimientos de caja \/ turno",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "shift_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Clave foránea hacia la entidad referenciada."
+                },
+                {
+                    "name": "user_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Clave foránea hacia la entidad referenciada."
+                },
+                {
+                    "name": "type",
+                    "type": "enum('in','out')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Entrada o Salida"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo amount."
+                },
+                {
+                    "name": "concept",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo concept."
+                },
+                {
+                    "name": "method_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Método de pago"
+                },
+                {
+                    "name": "table_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relaciona la tabla de referencia"
+                },
+                {
+                    "name": "record_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID de la referencia"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "method_id",
+                    "referenced_table": "payment_methods",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tillmove_method"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "shift_id",
+                    "referenced_table": "shifts",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tillmove_shift"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "table_id",
+                    "referenced_table": "system_tables",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tillmove_systable"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "user_id",
+                    "referenced_table": "users",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_tillmove_user"
+                }
+            ]
+        },
+        {
+            "table_name": "units",
+            "business_purpose": "Registro de unidades de medida",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "code",
+                    "type": "varchar(20)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo code."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(50)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_units_status"
+                }
+            ]
+        },
+        {
+            "table_name": "users",
+            "business_purpose": "Registro de usuarios del sistema",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "role_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Rol que tiene asignado"
+                },
+                {
+                    "name": "tax_profile_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Información fiscal"
+                },
+                {
+                    "name": "email",
+                    "type": "varchar(150)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Correo electrónico"
+                },
+                {
+                    "name": "phone",
+                    "type": "varchar(15)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Número de teléfono"
+                },
+                {
+                    "name": "password_hash",
+                    "type": "varchar(255)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Hash de la contraseña"
+                },
+                {
+                    "name": "google_id",
+                    "type": "varchar(50)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID de cuenta de Google"
+                },
+                {
+                    "name": "first_name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre"
+                },
+                {
+                    "name": "last_name",
+                    "type": "varchar(100)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Apellido"
+                },
+                {
+                    "name": "auth_pin",
+                    "type": "char(4)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "PIN de 4 digitos para autenticación rápida"
+                },
+                {
+                    "name": "gmail_token",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Token de cuenta de Google"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=active, 2=inactive, 3=suspended, 5=archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "role_id",
+                    "referenced_table": "roles",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_user_role"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_user_status"
+                },
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "tax_profile_id",
+                    "referenced_table": "tax_profiles",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_user_tax_id"
+                }
+            ]
+        }
+    ]
+}

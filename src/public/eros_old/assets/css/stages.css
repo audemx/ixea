@@ -1,0 +1,87 @@
+/* Contenedor Maestro de Escenarios */
+#os-viewport {
+    position: fixed;
+    top: var(--top-bar-height);
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - var(--top-bar-height));
+    overflow: hidden;
+}
+
+#dynamic-stages {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 50px;
+    pointer-events: none;
+}
+
+.stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    backdrop-filter: var(--mac-blur);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.3);
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    pointer-events: auto; 
+}
+
+.stage.active {
+    display: flex;
+    animation: stage-entry 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@keyframes stage-entry {
+    0% {
+        opacity: 0;
+        transform: translateX(-100px); /* Empieza 100px a la izquierda */
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);      /* Llega a su posición real */
+    }
+}
+
+/* LAUNCHPAD STAGE (GRILLA DE APPS) */
+#os-viewport .launchpad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 40px;
+    padding: 60px;
+    text-align: center;
+}
+
+.launchpad-app { cursor: pointer; transition: transform 0.2s; }
+
+.launchpad-app:hover { transform: scale(1.1); }
+
+.launchpad-app .icon-box {
+    width: 80px; height: 80px; background: white; border-radius: 18px;
+    margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+/* Esto le da un brillo sutil del mismo color que el icono */
+.launchpad-app .icon-box i {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    transition: all 0.3s ease;
+}
+
+/* Al pasar el mouse el icono brille con su propio color */
+.launchpad-app:hover .icon-box i {
+    filter: drop-shadow(0 15px 10px currentColor);
+}
+
+#stage-launchpad {
+    overflow-y: auto;
+}
+
+@keyframes stage-appear { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+

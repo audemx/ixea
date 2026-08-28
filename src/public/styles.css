@@ -1,0 +1,314 @@
+/**
+ * Estilos globales
+ * styles.css
+ */
+
+/* --- CLASES DE UTILIDAD ESTILO BOOTSTRAP --- */
+:root {
+    /* Paleta ixea */
+    --ixea-deep: #0a192f;
+    /* Azul medianoche */
+    --ixea-accent: #D4AF37;
+    /* Dorado */
+}
+
+/* Colores de Fondo */
+.bg-xdeep {
+    background-color: var(--ixea-deep) !important;
+}
+
+.bg-xaccent {
+    background-color: var(--ixea-accent) !important;
+}
+
+/* Texto */
+.text-xdeep {
+    color: var(--ixea-deep) !important;
+}
+
+.text-xaccent {
+    color: var(--ixea-accent) !important;
+}
+
+/* Bordes */
+.border-xdeep {
+    border-color: var(--ixea-deep) !important;
+}
+
+.border-xaccent {
+    border-color: var(--ixea-accent) !important;
+}
+
+/* Botones */
+.btn-xaccent {
+    background-color: var(--ixea-accent);
+    color: var(--ixea-deep);
+    font-weight: bold;
+    border: none;
+}
+
+.btn-xaccent:hover {
+    background-color: #45e0bb;
+    /* Un poco más oscuro al pasar el mouse */
+    color: var(--ixea-deep);
+}
+
+/* --- ESTILO BRANDBAR --- */
+.ixea-brandbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #ececec;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    top: 0;
+    width: 100%;
+    z-index: 1050;
+}
+
+.navbar-hidden {
+    transform: translateY(-100%);
+}
+
+.navbar-scrolled {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Logo */
+.brand-ixea {
+    font-family: 'Inter', sans-serif;
+    /* Tipografía geométrica sugerida */
+    letter-spacing: 1.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    color: #212529;
+}
+
+.brand-ixea svg {
+    width: 24px;
+    height: 24px;
+}
+
+.brand-text {
+    margin-left: 12px;
+    line-height: 1;
+}
+
+.brand-suffix {
+    font-weight: 300;
+    color: #0d6efd;
+    letter-spacing: 0.5px;
+    text-transform: none;
+    font-size: 0.9em;
+    padding-left: 8px;
+    margin-left: 8px;
+    border-left: 3px solid #0d6efd;
+}
+
+/* Slogan */
+.slogan-ixea {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    color: #6c757d;
+    letter-spacing: 1px;
+    text-transform: none;
+    font-size: .75rem;
+    padding-left: 8px;
+    margin-left: 8px;
+    border-left: 1px solid #6c757d;
+}
+
+.brand-navbar .bi {
+    font-size: 1.2rem;
+    vertical-align: middle;
+}
+
+/* --- ESTILO NAVBAR --- */
+.ixea-navbar {
+    top: 0;
+    /* Por defecto arriba */
+    z-index: 1040;
+    /* Justo debajo de la brandbar */
+    transition: top 0.3s ease-in-out;
+}
+
+.ixea-navbar .nav-link {
+    font-size: 0.8rem;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+}
+
+.ixea-nav-logo {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.8);
+    /* Viene de la izquierda y pequeño */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Efecto rebote suave */
+    pointer-events: none;
+    /* No clickable mientras es invisible */
+    width: 0;
+    /* No ocupa espacio inicial para no empujar menús */
+    overflow: hidden;
+}
+
+.ixea-nav-logo.show-logo {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+    width: 40px;
+    /* El ancho real de tu isotipo */
+    margin-right: 15px;
+}
+
+.ixea-nav-logo svg {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ixea-nav-logo:hover svg {
+    transform: rotate(90deg);
+}
+
+.ixea-nav-logo:hover svg rect {
+    fill: var(--ixea-accent);
+}
+
+.ixea-nav-logo:hover svg path {
+    stroke: #ffffff;
+}
+
+.ixea-nav-logo svg rect,
+.ixea-nav-logo svg path {
+    transition: fill 0.3s ease, stroke 0.3s ease;
+}
+
+/* Ajustes Navbar Móvil Inferior */
+.ixea-mobile-nav {
+    height: 70px;
+    z-index: 1050;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.4s ease-in-out;
+    /* Transición suave */
+    transform: translateY(0);
+    /* Posición visible */
+}
+
+.ixea-mobile-nav.nav-hidden {
+    transform: translateY(100%);
+}
+
+.ixea-mobile-nav .nav-link {
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.ixea-mobile-nav .nav-link:active {
+    transform: scale(0.9);
+    opacity: 1;
+}
+
+/* Glassmorphism para el menú lateral */
+.offcanvas {
+    backdrop-filter: blur(10px);
+    background-color: rgba(33, 37, 41, 0.95) !important;
+}
+
+
+/* --- ESTILO BODY --- */
+.btn-primary {
+    border-radius: 4px;
+    /* Menos redondeado para verse más corporativo */
+    padding: 12px 30px;
+}
+
+/* --- ESTILO CAROUSEL IXEA --- */
+#carouselIxea .carousel-item {
+    min-height: 500px;
+}
+
+#carouselIxea .carousel-item.active,
+#carouselIxea .carousel-item-next,
+#carouselIxea .carousel-item-prev {
+    display: flex !important;
+    align-items: center;
+}
+
+/* Ajuste a dispositivos móviles */
+@media (max-width: 768px) {
+    #carouselIxea .display-4 {
+        font-size: 2rem;
+        margin-top: 1rem;
+    }
+
+    #carouselIxea .lead {
+        font-size: 1rem;
+    }
+
+    #carouselIxea .carousel-item {
+        min-height: 450px;
+        text-align: center;
+        /* Centramos todo en móvil para mejor balance */
+    }
+
+    /* El icono o imagen se hace más pequeño en móvil */
+    #carouselIxea i {
+        font-size: 4rem !important;
+        margin-bottom: 2rem;
+    }
+}
+
+/* --- ESTILO CAROUSEL PRODUCTS --- */
+#carouselProducts .carousel-item {
+    min-height: 500px;
+}
+
+#carouselProducts .carousel-item {
+    transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1.000) !important;
+}
+
+/* Efecto hover sutil para los cuadros de productos */
+#carouselProducts .rounded-5 {
+    transition: all 0.3s ease;
+}
+
+#carouselProducts .rounded-5:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, .1) !important;
+}
+
+/* Estilos para tarjetas horizontalesß */
+.snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.snap-align-start {
+    scroll-snap-align: start;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+.row::-webkit-scrollbar {
+    display: none;
+}
+
+/* --- ESTILO FOOTER --- */
+footer .text-muted {
+    color: #a0a0a0;
+}
+
+.hover-white:hover {
+    color: #ffffff;
+    transition: color 0.2s ease;
+}
+
+footer hr {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+footer .input-group .form-control:focus {
+    background-color: #2b2b2b;
+    border-color: #0d6efd;
+    box-shadow: none;
+    color: white;
+}

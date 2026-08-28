@@ -1,0 +1,119 @@
+.
+├── .gitignore
+├── dev-log.md
+├── docker-compose.yml
+├── Dockerfile
+├── gen-tree.sh
+├── skills
+│   └── project_context.md
+├── src
+│   ├── app
+│   │   ├── .env
+│   │   ├── access
+│   │   │   ├── login-handler.php
+│   │   │   ├── login.php
+│   │   │   └── logout.php
+│   │   ├── classes
+│   │   │   ├── App.php
+│   │   │   └── GmailMailer.php
+│   │   ├── composer.json
+│   │   ├── composer.lock
+│   │   ├── core
+│   │   │   ├── Config.php
+│   │   │   └── Security.php
+│   │   ├── db
+│   │   │   ├── Connection.php
+│   │   │   ├── models
+│   │   │   │   ├── Account.php
+│   │   │   │   ├── App.php
+│   │   │   │   ├── Area.php
+│   │   │   │   ├── Attendance.php
+│   │   │   │   ├── BankAccount.php
+│   │   │   │   ├── Batch.php
+│   │   │   │   ├── Brand.php
+│   │   │   │   ├── Category.php
+│   │   │   │   ├── Customer.php
+│   │   │   │   ├── CustomerCreditPayment.php
+│   │   │   │   ├── CustomerCreditProfile.php
+│   │   │   │   ├── CustomerCreditSale.php
+│   │   │   │   ├── Department.php
+│   │   │   │   ├── Expense.php
+│   │   │   │   ├── ExpenseCategory.php
+│   │   │   │   ├── FinanceSnapshot.php
+│   │   │   │   ├── Ledger.php
+│   │   │   │   ├── Menu.php
+│   │   │   │   ├── PaymentMethod.php
+│   │   │   │   ├── Permission.php
+│   │   │   │   ├── Product.php
+│   │   │   │   ├── Production.php
+│   │   │   │   ├── ProductUnit.php
+│   │   │   │   ├── Purchase.php
+│   │   │   │   ├── PurchaseDetail.php
+│   │   │   │   ├── Recipe.php
+│   │   │   │   ├── Role.php
+│   │   │   │   ├── RolePermission.php
+│   │   │   │   ├── Sale.php
+│   │   │   │   ├── SaleDetail.php
+│   │   │   │   ├── Shift.php
+│   │   │   │   ├── Status.php
+│   │   │   │   ├── StockMovement.php
+│   │   │   │   ├── Supplier.php
+│   │   │   │   ├── SupplierCreditProfile.php
+│   │   │   │   ├── SystemAction.php
+│   │   │   │   ├── SystemColor.php
+│   │   │   │   ├── SystemLog.php
+│   │   │   │   ├── SystemTable.php
+│   │   │   │   ├── Table.php
+│   │   │   │   ├── TaxProfile.php
+│   │   │   │   ├── TillMovement.php
+│   │   │   │   ├── Unit.php
+│   │   │   │   └── User.php
+│   │   │   ├── schema-graph.json
+│   │   │   ├── schema.sql
+│   │   │   └── test-connection.php
+│   │   └── views
+│   │       ├── dashboard.php
+│   │       └── includes
+│   │           ├── dock.php
+│   │           ├── header.php
+│   │           ├── isotype.php
+│   │           ├── launchpad.php
+│   │           ├── menu.php
+│   │           ├── scripts.php
+│   │           └── stage.php
+│   ├── build.php
+│   ├── gen-models.php
+│   ├── gen-schema-json.php
+│   └── public
+│       ├── .htaccess
+│       ├── about
+│       │   └── eros.php
+│       ├── ai-lab
+│       │   └── market-intelligence
+│       │       └── api.php
+│       ├── assets
+│       │   └── videos
+│       │       ├── eros-dock.mp4
+│       │       ├── eros-stages.mp4
+│       │       └── eros-widgets.mp4
+│       ├── default.php
+│       ├── eros
+│       │   ├── .htaccess
+│       │   ├── includes
+│       │   │   └── isotipo.php
+│       │   └── index.php
+│       ├── includes
+│       │   ├── brandbar.php
+│       │   ├── footer.php
+│       │   ├── header.php
+│       │   ├── isotipo.php
+│       │   ├── logo.php
+│       │   ├── navbar.php
+│       │   ├── navmov.php
+│       │   ├── prefooter.php
+│       │   └── scripts.php
+│       ├── index.php
+│       └── styles.css
+└── structure.txt
+
+20 directories, 97 files

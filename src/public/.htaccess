@@ -1,0 +1,30 @@
+# 1. EVITAR EL LISTADO DIRECTO DE CARPETAS
+Options -Indexes
+
+# 2. ACTIVAR EL MOTOR DE REESCRITURA
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 3. FORZAR HTTPS SOLO EN PRODUCCIÓN (Ignora localhost e IPs locales para Docker)
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 4. QUITAR LA EXTENSIÓN .php DE LA URL VISIBLE (Redirección 301 externa)
+    # Ejemplo: Si entran a /contacto.php redirige visiblemente a /contacto
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/([^.\s]+\.)+php([^\s?]*) [NC]
+    RewriteRule ^(.*)\.php$ /$1 [R=301,L]
+
+    # 5. CARGAR INTERNAMENTE EL ARCHIVO .php
+    # Ejemplo: Si entran a /contacto busca internamente contacto.php
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.*)$ $1.php [L]
+
+    # 6. PÁGINA O CONTROLADOR DE FALLBACK (default.php)
+    # Si la ruta no existe como archivo ni como directorio real
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ default.php [QSA,L]
+</IfModule>

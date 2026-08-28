@@ -1,0 +1,113 @@
+/** -- Panel de widgets -- **/
+
+.widget-panel {
+    position: fixed;
+    width: calc(100% / 3 - 40px); /* Aproximadamente 1/6 del área total en horizontal */
+    height: calc(100vh / 2 - 40px);
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1040;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 20px; /* Bordes redondeados en todo el contorno */
+    display: none;
+    overflow: hidden;
+}
+
+.widget-panel.active { display: block; }
+
+/* Controladores estilo Mac */
+.widget-controls {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+}
+.ctrl-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.ctrl-close { background: #ff5f56; }
+.ctrl-move { background: #ffbd2e; }
+
+/* Sextantes (Posiciones) */
+.pos-0 { top: 40px; right: 80px; }  /* Top Right */
+.pos-1 { top: 40px; left: 50%; transform: translateX(-50%); } /* Top Center */
+.pos-2 { top: 40px; left: 80px; }   /* Top Left */
+.pos-3 { bottom: 40px; left: 80px; } /* Bottom Left */
+.pos-4 { bottom: 40px; left: 50%; transform: translateX(-50%); } /* Bottom Center */
+.pos-5 { bottom: 40px; right: 80px; } /* Bottom Right */
+
+/* Para los botones de la calculadora y otros widgets */
+.widget-btn {
+    background: rgba(255,255,255,0.05);
+    border: none;
+    color: white;
+    transition: all 0.2s;
+}
+.widget-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/** -- Calculadora -- **/
+
+.calc-display {
+    height: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.calc-btn {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: transform 0.1s ease; /* Cambiado 'active' por 'ease' */
+}
+
+.calc-btn:active {
+    transform: scale(0.95);
+    background-color: var(--bs-primary) !important;
+}
+
+/** -- Notas -- **/
+
+#notes-list::-webkit-scrollbar {
+    width: 4px;
+}
+#notes-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+.note-item:hover {
+    background: rgba(255,255,255,0.08) !important;
+    transition: background 0.3s ease;
+}
+
+/** -- Calendario -- **/
+
+.cal-day {
+    font-size: 0.8rem;
+    color: #ccc;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: default;
+}
+
+.cal-day.today {
+    background: var(--bs-primary);
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(var(--bs-primary-rgb), 0.4);
+}
+
+.cal-day.other-month {
+    opacity: 0.2;
+}

@@ -1,0 +1,595 @@
+/**
+ * IXEA OS - Estilos Globales
+ * /assets/css/main.css
+ */
+
+/* --- VARIABLES Y PALETA --- */
+:root {
+    /* Paleta IXEA OS */
+    --ixea-deep: #174382;       /* Azul medianoche */
+    --ixea-accent: #D4AF37;     /* Dorado */
+    
+    /* Paleta Soft para IXEA OS */
+    --soft-red: #ff6961;   
+    --soft-orange: #e67e22;  
+    --soft-yellow: #f1c40f;  
+    --soft-green: #9DD6AD;   
+    --soft-cyan: #00cfd5;  
+    --soft-blue: #84b6f4;  
+    --soft-purple: #9b59b6;
+    --soft-magenta:#CF71AE;
+    
+    /* Colores de extra */
+    --grey: #495057;    
+    --black: #2c3e50;   
+    
+    --mac-blur: blur(25px) saturate(200%);
+    --mac-bg: rgba(255, 255, 255, 0.7);
+    --top-bar-height: 32px;
+    --dock-width: 70px;
+}
+
+
+
+/* --- CLASES DE UTILIDAD IXEA (ESTILO BOOTSTRAP) --- */
+/** Background colors **/
+.bg-xdeep { background-color: var(--ixea-deep) !important; }
+.bg-xaccent { background-color: var(--ixea-accent) !important; }
+
+.bg-sfred { background-color: var(--soft-red) !important; }
+.bg-sforange { background-color: var(--soft-orange) !important; }
+.bg-sfyellow { background-color: var(--soft-yellow) !important; }
+.bg-sfgreen { background-color: var(--soft-green) !important; }
+.bg-sfblue { background-color: var(--soft-blue) !important; }
+.bg-sfcyan { background-color: var(--soft-cyan) !important; }
+.bg-sfpurple { background-color: var(--soft-purple) !important; }
+.bg-sfmagenta { background-color: var(--soft-magenta) !important; }
+
+.bg-grey { background-color: var(--grey) !important; }
+
+
+/** Text colors **/
+.text-xdeep { color: var(--ixea-deep) !important; }
+.text-xaccent { color: var(--ixea-accent) !important; }
+.text-black { color: var(--black) !important; }
+.text-grey { color: var(--grey) !important; }
+
+.text-sfred { color: var(--soft-red) !important; }
+.text-sforange { color: var(--soft-orange) !important; }
+.text-sfyellow { color: var(--soft-yellow) !important; }
+.text-sfgreen { color: var(--soft-green) !important; }
+.text-sfblue { color: var(--soft-blue) !important; }
+.text-sfcyan { color: var(--soft-cyan) !important; }
+.text-sfpurple { color: var(--soft-purple) !important; }
+.text-sfmagenta { color: var(--soft-magenta) !important; }
+
+
+/** Border colors **/
+.border-xdeep { border-color: var(--ixea-deep) !important; }
+.border-xaccent { border-color: var(--ixea-accent) !important; }
+.border-black { border-color: var(--black) !important; }
+
+.border-sfred { border-color: var(--soft-red) !important; }
+.border-sforange { border-color: var(--soft-orange) !important; }
+.border-sfyellow { border-color: var(--soft-yellow) !important; }
+.border-sfgreen { border-color: var(--soft-green) !important; }
+.border-sfblue { border-color: var(--soft-blue) !important; }
+.border-sfcyan { border-color: var(--soft-cyan) !important; }
+.border-sfpurple { border-color: var(--soft-purple) !important; }
+.border-sfmagenta { border-color: var(--soft-magenta) !important; }
+
+
+/** Buttons colors **/
+.btn-sfred { background-color: var(--soft-red) !important; }
+.btn-sforange { background-color: var(--soft-orange) !important; }
+.btn-sfyellow { background-color: var(--soft-yellow) !important; }
+.btn-sfgreen { background-color: var(--soft-green) !important; }
+.btn-sfblue { background-color: var(--soft-blue) !important; }
+.btn-sfcyan { background-color: var(--soft-cyan) !important; }
+.btn-sfpurple { background-color: var(--soft-purple) !important; }
+.btn-sfmagenta { background-color: var(--soft-magenta) !important; }
+
+.btn-grey { background-color: var(--grey) !important; }
+
+.btn-xaccent {
+    background-color: var(--ixea-accent);
+    color: var(--ixea-deep);
+    font-weight: bold;
+    border: none;
+    transition: 0.3s;
+}
+.btn-xaccent:hover {
+    background-color: #e5c14f;
+    color: var(--ixea-deep);
+}
+
+
+/** Buttons outline colors **/
+.btn-outline-sfred {
+    color: var(--soft-red);
+    border-color: var(--soft-red);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfred:hover {
+    background-color: var(--soft-red) !important;
+    border-color: var(--soft-red);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfred {
+    background-color: var(--soft-red);
+    border-color: var(--soft-red);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfred:hover {
+    color: var(--soft-red);
+    border-color: var(--soft-red);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sforange {
+    color: var(--soft-orange);
+    border-color: var(--soft-orange);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sforange:hover {
+    background-color: var(--soft-orange);
+    border-color: var(--soft-orange);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sforange {
+    background-color: var(--soft-orange);
+    border-color: var(--soft-orange);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sforange:hover {
+    color: var(--soft-orange);
+    border-color: var(--soft-orange);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfyellow {
+    color: var(--soft-yellow);
+    border-color: var(--soft-yellow);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfyellow:hover {
+    background-color: var(--soft-yellow);
+    border-color: var(--soft-yellow);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfyellow {
+    background-color: var(--soft-yellow);
+    border-color: var(--soft-yellow);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfyellow:hover {
+    color: var(--soft-yellow);
+    border-color: var(--soft-yellow);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfgreen {
+    color: var(--soft-green);
+    border-color: var(--soft-green);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfgreen:hover {
+    background-color: var(--soft-green) !important;
+    border-color: var(--soft-green);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfgreen {
+    background-color: var(--soft-green);
+    border-color: var(--soft-green);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfgreen:hover {
+    color: var(--soft-green);
+    border-color: var(--soft-green);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfblue {
+    color: var(--soft-blue);
+    border-color: var(--soft-blue);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfblue:hover {
+    background-color: var(--soft-blue) !important;
+    border-color: var(--soft-blue);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfblue {
+    background-color: var(--soft-blue);
+    border-color: var(--soft-blue);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfblue:hover {
+    color: var(--soft-blue);
+    border-color: var(--soft-blue);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfcyan {
+    color: var(--soft-cyan);
+    border-color: var(--soft-cyan);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfcyan:hover {
+    background-color: var(--soft-cyan) !important;
+    border-color: var(--soft-cyan);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfcyan {
+    background-color: var(--soft-cyan);
+    border-color: var(--soft-cyan);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfcyan:hover {
+    color: var(--soft-cyan);
+    border-color: var(--soft-cyan);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfpurple {
+    color: var(--soft-purple);
+    border-color: var(--soft-purple);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfpurple:hover {
+    background-color: var(--soft-purple) !important;
+    border-color: var(--soft-purple);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfpurple {
+    background-color: var(--soft-purple);
+    border-color: var(--soft-purple);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfpurple:hover {
+    color: var(--soft-purple);
+    border-color: var(--soft-purple);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.btn-outline-sfmangeta {
+    color: var(--soft-magenta);
+    border-color: var(--soft-magenta);
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-sfmangeta:hover {
+    background-color: var(--soft-magenta) !important;
+    border-color: var(--soft-magenta);
+    color: #fff;
+}
+.btn-check:checked + .btn-outline-sfmangeta {
+    background-color: var(--soft-magenta);
+    border-color: var(--soft-magenta);
+    color: #fff !important;
+    cursor: default;
+}
+.btn-check:not(:checked) + .btn-outline-sfmangeta:hover {
+    color: var(--soft-magenta);
+    border-color: var(--soft-magenta);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+
+/** Switchs colors **/
+.switch-sforange:checked {
+    background-color: var(--soft-orange) !important;
+    border-color: var(--soft-orange) !important;
+}
+.switch-sforange:focus {
+    border-color: var(--soft-orange) !important;
+    box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--soft-orange), transparent 75%) !important;
+}
+.switch-sforange:not(:checked):focus {
+    border-color: color-mix(in srgb, var(--soft-orange), transparent 50%) !important;
+}
+.switch-sforange:focus:not(:checked) {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23adb5bd'/%3e%3c/svg%3e") !important;
+}
+
+.switch-sfpurple:checked {
+    background-color: var(--soft-purple) !important;
+    border-color: var(--soft-purple) !important;
+}
+.switch-sfpurple:focus {
+    border-color: var(--soft-purple) !important;
+    box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--soft-purple), transparent 75%) !important;
+}
+.switch-sfpurple:not(:checked):focus {
+    border-color: color-mix(in srgb, var(--soft-purple), transparent 50%) !important;
+}
+.switch-sfpurple:focus:not(:checked) {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23adb5bd'/%3e%3c/svg%3e") !important;
+}
+
+.switch-sfmagenta:checked {
+    background-color: var(--soft-magenta) !important;
+    border-color: var(--soft-magenta) !important;
+}
+.switch-sfmagenta:focus {
+    border-color: var(--soft-magenta) !important;
+    box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--soft-magenta), transparent 75%) !important;
+}
+.switch-sfmagenta:not(:checked):focus {
+    border-color: color-mix(in srgb, var(--soft-magenta), transparent 50%) !important;
+}
+.switch-sfmagenta:focus:not(:checked) {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23adb5bd'/%3e%3c/svg%3e") !important;
+}
+
+
+/** Nav-links colors **/
+.nav-pills .nav-link.link-sforange {
+    background-color: transparent;
+    color: var(--soft-orange) !important;
+}
+.nav-pills .nav-link.active.link-sforange {
+    background-color: var(--soft-orange) !important;
+    color: white !important;
+    border-color: var(--soft-orange) !important;
+}
+
+.nav-pills .nav-link.link-sfyellow {
+    background-color: transparent;
+    color: var(--soft-yellow) !important;
+}
+.nav-pills .nav-link.active.link-sfyellow {
+    background-color: var(--soft-yellow) !important;
+    color: white !important;
+    border-color: var(--soft-yellow) !important;
+}
+
+.nav-pills .nav-link.link-sfcyan {
+    background-color: transparent;
+    color: var(--soft-cyan) !important;
+}
+.nav-pills .nav-link.active.link-sfcyan {
+    background-color: var(--soft-cyan) !important;
+    color: white !important;
+    border-color: var(--soft-cyan) !important;
+}
+
+.nav-pills .nav-link.link-sfpurple {
+    background-color: transparent;
+    color: var(--soft-purple) !important;
+}
+.nav-pills .nav-link.active.link-sfpurple {
+    background-color: var(--soft-purple) !important;
+    color: white !important;
+    border-color: var(--soft-purple) !important;
+}
+
+.nav-pills .nav-link.link-sfmagenta {
+    background-color: transparent;
+    color: var(--soft-mangeta) !important;
+}
+.nav-pills .nav-link.active.link-sfmagenta {
+    background-color: var(--soft-mangeta) !important;
+    color: white !important;
+    border-color: var(--soft-mangeta) !important;
+}
+
+.nav-pills .nav-link.link-grey {
+    background-color: transparent;
+    color: var(--grey) !important;
+}
+.nav-pills .nav-link.active.link-grey {
+    background-color: var(--grey) !important;
+    color: white !important;
+    border-color: var(--grey) !important;
+}
+
+
+
+/* --- REGLAS DE CUERPO --- */
+body, html {
+    margin: 0; padding: 0; 
+    height: 100vh; width: 100vw;
+    overflow: hidden;
+    background-size: cover;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+}
+
+/* 
+ * Coreografía de presentación
+ */
+ 
+/* 1. Bienvenida cayendo suavemente */
+#intro-welcome {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.is-ready {
+    opacity: 1 !important;
+}
+
+.letter {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: letterIn 0.4s ease forwards;
+}
+
+@keyframes letterIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 2. El Logo: Explosión limpia */
+.logo-reveal {
+    visibility: visible !important;
+    height: auto !important;
+    animation: logoPop 0.6s cubic-bezier(0.34, 1.7, 0.64, 1);
+}
+
+@keyframes logoPop {
+    0% { opacity: 0; transform: scale(0.5); filter: blur(10px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* 3. Slogan: Caída con "Peso" */
+.slogan-land {
+    visibility: visible !important;
+    animation: wordLand 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes wordLand {
+    0% { opacity: 0; transform: translateY(-50px); filter: blur(4px); }
+    80% { transform: translateY(5px); } /* Pequeño impacto al caer */
+    100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* Animación de barrido hacia la izquierda */
+.sweep-left {
+    transform: translateX(-110%) skewX(-5deg); /* Un poco inclinado para dar sensación de velocidad */
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+}
+
+/* Animación para el Stage del Launchpad */
+.launchpad-slide-in {
+    animation: slideFromLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideFromLeft {
+    0% {
+        transform: translateX(100%); /* Viene siguiendo a la intro */
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+
+
+/** Modal **/
+.modal-content {
+    overflow: visible !important;
+}
+
+#modal-size-handler {
+    /* Define la altura máxima restando los márgenes superior e inferior */
+    max-height: calc(100vh - 3*var(--top-bar-height));
+    
+    /* Asegura que el modal no se pegue a los bordes */
+    margin: calc(1.5*var(--top-bar-height)) auto;
+}
+
+.btn-modal-fuera {
+    position: absolute;
+    top: -20px; 
+    right: -20px;      /* Lo sube por encima del modal */
+    filter: invert(1); /* Opcional: lo hace blanco si el fondo es oscuro */
+    z-index: 2000;   /* Para que siempre esté al frente */
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.modal .btn-close-out {
+    position: absolute;
+    top: -15px; 
+    right: -15px;
+    background-color: #fff;
+    border-radius: 50%;
+    padding: 10px;
+    opacity: 1;
+    z-index: 2100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.modal .btn-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+}
+
+.modal .btn-nav-prev { left: -70px; }
+.modal .btn-nav-next { right: -70px; }
+
+.modal .btn-nav:hover {
+    background-color: var(--sfyellow); /* O tu color de acento */
+    transform: translateY(-50%) scale(1.1);
+}
+
+
+/** Bloqueador Global Ixea Bouncer **/
+#ixea-bouncer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(4px);    /* Efecto moderno de desenfoque */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Por encima de todo */
+    transition: opacity 0.3s ease;
+}
+
+.bouncer-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--soft-cyan); /* Tu color Cyan característico */
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.bouncer-text {
+    margin-top: 15px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+
+/* Ocultarlos en pantallas pequeñas para que no se salgan del monitor */
+@media (max-width: 720px) {
+    .modal .btn-nav-prev { left: 10px; }
+    .modal .btn-nav-next { right: 10px; }
+}
