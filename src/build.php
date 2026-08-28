@@ -37,22 +37,22 @@ echo "   ✅ Base de datos recreada e importada con éxito.\n\n";
 
 // --- PASO 2: Generar Modelos PHP ---
 echo "🏗️  Paso 2: Generando modelos Eloquent en /models...\n";
-$genModelsPath = __DIR__ . '/gen-models.php';
+$genModelsPath = __DIR__ . '/build-schema-models.php';
 if (file_exists($genModelsPath)) {
     include $genModelsPath;
 } else {
-    echo "❌ No se encontró gen-models.php en {$genModelsPath}\n";
+    echo "❌ No se encontró build-schema-models.php en {$genModelsPath}\n";
     exit(1);
 }
 echo "\n";
 
 // --- PASO 3: Generar Grafo JSON ---
 echo "📊 Paso 3: Generando grafo de arquitectura schema-graph.json...\n";
-$genSchemaPath = __DIR__ . '/gen-schema-json.php';
+$genSchemaPath = __DIR__ . '/build-schema-graph.php';
 if (file_exists($genSchemaPath)) {
     include $genSchemaPath;
 } else {
-    echo "❌ No se encontró gen-schema-json.php en {$genSchemaPath}\n";
+    echo "❌ No se encontró build-schema-graph.php en {$genSchemaPath}\n";
     exit(1);
 }
 echo "\n";

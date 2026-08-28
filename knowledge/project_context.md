@@ -40,4 +40,17 @@
 
 Puede encontrarse la arquitectura del sistema en la siguiente documentación:
 
-* `structure.txt` : Describe la estructura de archivos y carpetas del proyecto.
+* `structure.txt`: Describe la estructura de archivos y carpetas del proyecto.
+* `docker-compose.yml`: Describe los contenedores docker y sus configuraciones.
+* `src/app/db/schema-graph.json`: Describe la estructura entidades-relaciones de base de datos.
+* `src/app/composer.json`: Describe las dependencias de PHP y namespaces.
+    - `/vendor/autoload.php`: Autoloader de composer.
+    - `App\Classes\`: Clases de utilidad
+    - `App\Core\`: Clases del sistema
+    - `App\Database\`: Clases de base de datos
+    - `App\Models\`: Modelos Eloquent
+
+## 4. Convenciones y Reglas de Desarrollo
+
+* Bootstrapping Global: `Connection::boot()` debe ejecutarse siempre antes de intentar consultar modelos Eloquent en cualquier script o punto de entrada.
+    * Siendo que `index.php` es el punto de entrada principal para acceder a IXEA EROS, se debe ejecutar `Connection::boot()` en `index.php`.
