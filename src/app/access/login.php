@@ -21,19 +21,19 @@ Connection::boot();
 // Redirigir si ya existe sesión activa
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role_id'] === 0 || $_SESSION['role_id'] === 1) {
-        header("Location: /eros/dashboard");
+        header("Location: /dashboard");
     } elseif ($_SESSION['role_id'] === 2) {
-        header("Location: /eros/till");
+        header("Location: /till");
     } elseif ($_SESSION['role_id'] === 3) {
-        header("Location: /eros/commander");
+        header("Location: /commander");
     } elseif ($_SESSION['role_id'] === 4) {
-        header("Location: /eros/kitchen");
+        header("Location: /kitchen");
     } elseif ($_SESSION['role_id'] === 5) {
-        header("Location: /eros/clients");
+        header("Location: /clients");
     } elseif ($_SESSION['role_id'] === 6) {
-        header("Location: /eros/suppliers");
+        header("Location: /suppliers");
     } else {
-        header("Location: /eros/index");
+        header("Location: /index");
     }
     exit;
 }
@@ -105,19 +105,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $_SESSION['login_attempts'] < $inte
                 }
                 
                 if ($_SESSION['role_id'] === 0 || $_SESSION['role_id'] === 1) {
-                    header("Location: /eros/dashboard");
+                    header("Location: /dashboard");
                 } elseif ($_SESSION['role_id'] === 2) {
-                    header("Location: /eros/till");
+                    header("Location: /till");
                 } elseif ($_SESSION['role_id'] === 3) {
-                    header("Location: /eros/commander");
+                    header("Location: /commander");
                 } elseif ($_SESSION['role_id'] === 4) {
-                    header("Location: /eros/kitchen");
+                    header("Location: /kitchen");
                 } elseif ($_SESSION['role_id'] === 5) {
-                    header("Location: /eros/clients");
+                    header("Location: /clients");
                 } elseif ($_SESSION['role_id'] === 6) {
-                    header("Location: /eros/suppliers");
+                    header("Location: /suppliers");
                 } else {
-                    header("Location: /eros/index");
+                    header("Location: /index");
                 }
                 exit;
 
@@ -145,6 +145,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $_SESSION['login_attempts'] < $inte
 // Variables Google para local/docker
 $googleClientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
 $googleRedirectUri = $_ENV['GOOGLE_REDIRECT_URI'] ?? '';
+
+$isotypePath = __DIR__ . '/../views/includes/isotype.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -153,7 +155,7 @@ $googleRedirectUri = $_ENV['GOOGLE_REDIRECT_URI'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<?php 
-        $svg = file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/includes/isotipo.php');
+        $svg = file_get_contents($isotypePath);
         
         // Reemplazamos las variables por colores sólidos para el navegador
         $svg = str_replace('var(--bg-color)', '#FFF', $svg);
@@ -222,7 +224,7 @@ $googleRedirectUri = $_ENV['GOOGLE_REDIRECT_URI'] ?? '';
                         <div class="brand-container">
                             <div class="brand-logo">
                             <?php 
-                                $svg = file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/includes/isotipo.php');
+                                $svg = file_get_contents($isotypePath);
                                 $svg = str_replace('var(--bg-color)', '#1A1A1A', $svg);
                                 $svg = str_replace('var(--x-color)', '#FFF', $svg);
                                 echo $svg;

@@ -1,0 +1,94 @@
+/* BARRA SUPERIOR (MENU BAR) */
+#menu-bar {
+    height: var(--top-bar-height);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: var(--mac-blur);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    color: white;
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 2000;
+
+}
+
+.menu-left,
+.menu-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-item {
+    cursor: pointer;
+    font-weight: 500;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+}
+
+.menu-item:hover {
+    opacity: 1;
+    color: var(--ixea-accent);
+}
+
+.ixea-logo svg {
+    width: 80%;
+    height: 80%;
+    align-items: center;
+    fill: currentColor;
+    --bg-color: #ffffff;
+    --x-color: #1a1a1a;
+    width: 20px;
+    height: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ixea-logo:hover svg {
+    --bg-color: var(--ixea-accent);
+    --x-color: #ffffff;
+    transform: rotate(90deg);
+}
+
+/* Quitar flecha de dropdowns en el menu-bar */
+#menu-bar .dropdown-toggle::after {
+    display: none;
+}
+
+/* Efecto de parpadeo para errores graves */
+.text-blink {
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+.dropdown-menu {
+    background: rgba(45, 45, 45, 0.8) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+    backdrop-filter: blur(40px) saturate(180%) !important;
+    border: 1px solid rgba(150, 150, 150, 0.3) !important;
+    border-radius: 12px !important;
+    color: white !important;
+}
+
+.dropdown-item {
+    padding: 6px 20px;
+    /* Más padding para dedos */
+    font-size: 1.05rem;
+    /* Un pelín más de letra */
+    color: rgba(255, 255, 255, 0.9);
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}

@@ -100,4 +100,15 @@
 ### [2026-08-28 18:45] `docs(knowledge)`: Documentación de contexto y decisiones de arquitectura
 
 * **docs(arch):** Se elaboró el archivo de contexto técnico global del proyecto `project_context.md` en el directorio `knowledge/`, traslado la bitácora de desarrollo.
-* **docs(adr):** Se vincularon los requerimientos de interfaz multimodo documentados en **ADR-001** (Adopción de arquitectura híbrida Stages/Stations para el Frontend).
+* **docs(adr):** Se incorporó a knowledge/ los ADRs/ de arquitectura. Se vincularon los requerimientos de interfaz multimodo documentados en **ADR-001** (Adopción de arquitectura híbrida Stages/Stations para el Frontend), ADR-002 (Uso de Eloquent ORM fuera de Laravel), ADR-003 (Estrategia de Autoconsumo de Metadatos mediante Generación Automática de Modelos y Schemas JSON), ADR-004 (Aislamiento del Entorno de Desarrollo y Separación de Capas HTTP/App mediante Docker).
+* **build(deps):** Se ejecutó `docker exec -it dev-web-1 composer dump-autoload --working-dir=/var/www/app` para actualizar el mapa de autocarga de clases PSR-4.
+
+### [2026-09-05 01:15] `feat(infra)`: PoC de Ixea Bistro.
+* Se planteo un esquema de desarrollo sobre React+Node.js.
+* Se construyó un modelo prototipo del comandero.
+* Debido a la incapacidad para levantar conexiones persistentes en plataformas de hosting compartida como Hostinger, se abandonó la idea de utilizar WebSockets o Server-Sent Events (SSE).
+* Se planteo utitilizar polling cada 5 segundos, lo cual representa una latencia de 5 segundos en el peor de los casos, junto con una infraestructura de Edge Compute donde un único nodo dentro del negocio se encargaría de actualizar los cambios a los demás dispositivos.
+* Se integrará nuevamente PHP para manejo de base de datos y lógica de negocio.
+
+### [2026-09-06 18:01] `feat(ui)`: Prototipo de diseño para Bistro POS y Bistro KDS.
+

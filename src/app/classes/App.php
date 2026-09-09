@@ -22,7 +22,7 @@ class App {
         $this->id = (int)($data['id'] ?? 0);
         $this->code = $data['code'] ?? '';
         $this->title = $data['title'] ?? '';
-        $this->url = '/' . ($data['code'] ?? '');
+        $this->url = '/modules/' . ($data['code'] ?? '');
         $this->permissionKey = $data['permission_key'] ?? '';
         $this->icon = $data['icon'] ?? '';
         $this->colorHex = $data['color_hex'] ?? '#000000';

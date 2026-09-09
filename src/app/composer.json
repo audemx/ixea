@@ -1,5 +1,6 @@
 {
     "name": "audeemii/app",
+    "version": "1.0.0",
     "require": {
         "php": "^8.2",
         "illuminate/database": "^10.0",
@@ -11,7 +12,8 @@
             "App\\Classes\\": "classes/",
             "App\\Core\\": "core/",
             "App\\Database\\": "db/",
-            "App\\Models\\": "db/models/"
+            "App\\Models\\": "db/models/",
+            "App\\Controllers\\": "controllers/"
         }
     },
     "config": {

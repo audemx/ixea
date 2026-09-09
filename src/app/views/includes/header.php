@@ -29,7 +29,7 @@ $getAssetVersion = function($relativePath) use ($publicPath) {
 
 <!-- Frameworks CSS externos (CDNs) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
 <!-- Estilos propios de la aplicación con cache busting dinámico -->
@@ -38,3 +38,5 @@ $getAssetVersion = function($relativePath) use ($publicPath) {
 <link rel="stylesheet" href="/assets/css/dock.css?v=<?= $getAssetVersion('/assets/css/dock.css'); ?>">
 <link rel="stylesheet" href="/assets/css/stage.css?v=<?= $getAssetVersion('/assets/css/stage.css'); ?>">
 <link rel="stylesheet" href="/assets/css/apps.css?v=<?= $getAssetVersion('/assets/css/apps.css'); ?>">
+
+<script src="https://cdn.tailwindcss.com"></script>

@@ -8,13 +8,14 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 4. FORZAR HTTPS SOLO EN PRODUCCIÓN
-    RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
-    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
+    # 4. FORZAR HTTPS SOLO EN PRODUCCIÓN (Ignora localhost, *.localhost e IPs locales con/sin puerto)
+    RewriteCond %{HTTP_HOST} !localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # 5. FRONT CONTROLLER
+    # Redirige cualquier petición a index.php si no es archivo o carpeta física existente
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ index.php [QSA,L]

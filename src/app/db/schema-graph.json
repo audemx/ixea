@@ -1,11 +1,11 @@
 {
     "$schema_version": "1.0",
-    "created_at": "2026-08-28 21:18:03",
+    "created_at": "2026-09-08 06:26:50",
     "database_context": {
         "name": "ixea_db",
         "engine": "MariaDB\/MySQL",
         "description": "Axiom: Base de datos motor de Ixea EROS",
-        "total_tables": 44
+        "total_tables": 45
     },
     "entities": [
         {
@@ -2072,6 +2072,15 @@
                     "description": "Nombre del item"
                 },
                 {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del item"
+                },
+                {
                     "name": "category_id",
                     "type": "int(10) unsigned",
                     "nullable": false,
@@ -2090,13 +2099,22 @@
                     "description": "Relaciona la tabla de áreas"
                 },
                 {
-                    "name": "description",
-                    "type": "varchar(255)",
+                    "name": "price",
+                    "type": "decimal(10,2)",
                     "nullable": false,
                     "default": null,
                     "is_primary_key": false,
                     "is_foreign_key": false,
-                    "description": "Descripción del item"
+                    "description": "Precio del item"
+                },
+                {
+                    "name": "cost",
+                    "type": "decimal(10,2)",
+                    "nullable": false,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Costo del item"
                 },
                 {
                     "name": "status_id",
@@ -2137,7 +2155,7 @@
                 {
                     "type": "belongsTo",
                     "foreign_key": "category_id",
-                    "referenced_table": "categories",
+                    "referenced_table": "menu_categories",
                     "referenced_key": "id",
                     "constraint_name": "fk_menu_category"
                 },
@@ -2147,6 +2165,96 @@
                     "referenced_table": "statuses",
                     "referenced_key": "id",
                     "constraint_name": "fk_menu_status"
+                }
+            ]
+        },
+        {
+            "table_name": "menu_categories",
+            "business_purpose": "Registro de categorías del menú",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Campo name."
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción de la categoría"
+                },
+                {
+                    "name": "emoji",
+                    "type": "varchar(10)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Emoji de la categoría"
+                },
+                {
+                    "name": "sort_order",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Orden de visualización de la categoría"
+                },
+                {
+                    "name": "status_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "1",
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Estatus del registro: 1=Active, 3=Suspended, 5=Archived"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "status_id",
+                    "referenced_table": "statuses",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_menu_categories_status"
                 }
             ]
         },
@@ -4210,6 +4318,15 @@
                     "is_primary_key": false,
                     "is_foreign_key": true,
                     "description": "Estatus de la tabla: 1=active, 2=inactive, 4=discontinued, 5=archived"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": false,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
                 }
             ],
             "relationships": [
@@ -4266,13 +4383,49 @@
                     "description": "Capacidad de personas"
                 },
                 {
+                    "name": "pos_x",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Posición en el eje X"
+                },
+                {
+                    "name": "pos_y",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Posición en el eje Y"
+                },
+                {
+                    "name": "size",
+                    "type": "enum('S','M','L')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tamaño de la mesa"
+                },
+                {
+                    "name": "orientation",
+                    "type": "enum('H','V')",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Orientación de la mesa"
+                },
+                {
                     "name": "use_status_id",
                     "type": "int(10) unsigned",
                     "nullable": false,
                     "default": "12",
                     "is_primary_key": false,
                     "is_foreign_key": true,
-                    "description": "Estado de uso: 11=open, 12=closed"
+                    "description": "Estado de uso: 6=pending, 11=open, 12=closed"
                 },
                 {
                     "name": "status_id",

@@ -13,33 +13,10 @@
 
 require_once __DIR__ . '/app/vendor/autoload.php';
 
+use App\Database\Connection;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-// Inicializar Capsule con la conexión local
-$capsule = new Capsule();
-
-// Soporte de compatibilidad PDO para PHP 8.5+
-$initAttr = defined('\Pdo\Mysql::ATTR_INIT_COMMAND')
-    ? \Pdo\Mysql::ATTR_INIT_COMMAND
-    : \PDO::MYSQL_ATTR_INIT_COMMAND;
-
-$capsule->addConnection([
-    'driver'    => 'mysql',
-    'host'      => '127.0.0.1',
-    'port'      => '3306',
-    'database'  => 'ixea_db',
-    'username'  => 'root',
-    'password'  => 'ixea_1234.',
-    'charset'   => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix'    => '',
-    'options'   => [
-        $initAttr => "SET NAMES utf8mb4",
-    ],
-]);
-
-$capsule->setAsGlobal();
-$capsule->bootEloquent();
+Connection::boot();
 
 /**
  * Mapea comentarios de columnas o infiere descripciones por defecto

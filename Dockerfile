@@ -19,3 +19,7 @@ COPY src/public/ /var/www/html/
 
 # 5. Copiar la carpeta privada fuera de la raíz web de Apache
 COPY src/app/ /var/www/app/
+
+# 6. Configuración VirtualHost al contenedor
+COPY apache/eros.conf /etc/apache2/sites-available/eros.conf
+RUN a2ensite eros.conf

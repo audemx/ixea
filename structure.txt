@@ -1,9 +1,13 @@
 .
-├── dev-log.md
 ├── docker-compose.yml
 ├── Dockerfile
-├── gen-tree.sh
-├── skills
+├── knowledge
+│   ├── ADRs
+│   │   ├── ADR-001.md
+│   │   ├── ADR-002.md
+│   │   ├── ADR-003.md
+│   │   └── ADR-004.md
+│   ├── dev-log.md
 │   └── project_context.md
 ├── src
 │   ├── app
@@ -34,9 +38,9 @@
 │   │           ├── menu.php
 │   │           ├── scripts.php
 │   │           └── stage.php
+│   ├── build-schema-graph.php
+│   ├── build-schema-models.php
 │   ├── build.php
-│   ├── gen-models.php
-│   ├── gen-schema-json.php
 │   └── public
 │       ├── about
 │       │   └── eros.php
@@ -67,4 +71,4 @@
 │       └── styles.css
 └── structure.txt
 
-19 directories, 49 files
+20 directories, 52 files

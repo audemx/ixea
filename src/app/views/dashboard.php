@@ -3,7 +3,8 @@
  * IXEA EROS - Dashboard View (Panel Principal)
  * /src/app/views/dashboard.php
  */
-$viewsPath = __DIR__;
+$viewsPath = __DIR__;        // Ruta a la carpeta /var/www/app/views
+$publicPath = $_SERVER['DOCUMENT_ROOT']; // Ruta a la carpeta /var/www/html
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -12,7 +13,7 @@ $viewsPath = __DIR__;
     <title>IXEA EROS - Dashboard</title>
 </head>
 <body>
-
+    
     <?php include $viewsPath . '/includes/menu.php'; ?>
 
     <?php include $viewsPath . '/includes/dock.php'; ?>

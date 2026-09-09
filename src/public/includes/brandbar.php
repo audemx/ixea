@@ -3,11 +3,13 @@
 * Barra de identidad estática
 * includes/navbar.php
 */
-// Detectar si estamos trabajando en entorno local o en producción
-$isLocal = ($_SERVER['HTTP_HOST'] === 'localhost:8000' || $_SERVER['HTTP_HOST'] === '127.0.0.1:8000');
+// Detectar si el tráfico proviene del subdominio de desarrollo o de producción
+$host = $_SERVER['HTTP_HOST'] ?? '';
 
-// Definir la URL de acceso a la plataforma EROS
-$erosUrl = $isLocal ? '/eros' : 'https://eros.ixea.mx';
+$isLocal = (str_contains($host, 'localhost') || str_contains($host, '127.0.0.1'));
+
+// Definir la URL base de EROS
+$erosUrl = $isLocal ? 'http://eros.localhost:8000/login' : 'https://eros.ixea.mx/login';
 ?>
 <nav id="brandbar" class="navbar navbar-expand-lg navbar-light bg-white ixea-brandbar sticky-top py-2">
     <div class="container">

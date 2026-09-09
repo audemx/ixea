@@ -36,6 +36,8 @@ CREATE TABLE `apps` (
   KEY `fk_apps_status` (`status_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Catálogo de aplicaciones del sistema';
 
+-- --------------------------------------------------------
+
 --
 -- 1. Estructura de tabla para `accounts`
 -- Registro de cuentas contables globales
@@ -253,23 +255,6 @@ CREATE TABLE `customers` (
 -- --------------------------------------------------------
 
 --
--- 12. Estructura de tabla para `departments`
--- Registro de departamentos (operativos)
---
-CREATE TABLE `departments` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL COMMENT 'Nombre del departamento',
-  `description` text NULL COMMENT 'Descripción del departamento',
-  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=Active, 3=Suspended, 5=Archived',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_departments_status` (`status_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de departamentos (operativos)';
-
--- --------------------------------------------------------
-
---
 -- 13. Estructura de tabla para `expense_categories`
 -- Registro de categorías de gastos
 --
@@ -379,27 +364,6 @@ CREATE TABLE `ledgers` (
 -- --------------------------------------------------------
 
 --
--- 17. Estructura de tabla para `menu`
--- Registro de la carta o menú del restaurante o negocio de comidas
---
-CREATE TABLE `menu` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL COMMENT 'Nombre del item',
-  `category_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de categorías',
-  `area_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de áreas',
-  `description` varchar(255) NOT NULL COMMENT 'Descripción del item',
-  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estado del registro: 1=active, 3=suspended, 4=discontinued, 5=archived',
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_menu_category` (`category_id`),
-  KEY `idx_menu_area` (`area_id`),
-  KEY `idx_menu_status` (`status_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de la carta o menú del restaurante o negocio de comidas';
-
--- --------------------------------------------------------
-
---
 -- 18. Estructura de tabla para `payment_methods`
 -- Registro de métodos de pago
 --
@@ -456,32 +420,6 @@ CREATE TABLE `product_units` (
   KEY `fk_unit_supplier` (`supplier_id`),
   KEY `fk_unit_master` (`unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de unidades de compra, venta y conversión de los productos';
-
--- --------------------------------------------------------
-
---
--- 21. Estructura de tabla para `production`
--- Registro productos elaborados en producción
---
-CREATE TABLE `production` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `category_id` int(10) UNSIGNED NOT NULL COMMENT 'Categoría del producto',
-  `sku` varchar(50) NOT NULL COMMENT 'Código del producto',
-  `name` varchar(200) NOT NULL COMMENT 'Nombre del producto',
-  `description` text NULL COMMENT 'Descripción del producto',
-  `unit_id` int(10) UNSIGNED NOT NULL COMMENT 'Unidad de medida',
-  `stock` decimal(12,4) NOT NULL COMMENT 'Cantidad actual',
-  `min_stock` decimal(12,4) NOT NULL DEFAULT 0.0000 COMMENT 'Stock mínimo',
-  `max_stock` decimal(12,4) NOT NULL DEFAULT 0.0000 COMMENT 'Stock máximo',
-  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estado del registro: 1=active, 2=inactive, 3=suspended, 4=discontinued, 5=archived',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_production_sku` (`sku`),
-  KEY `fk_production_category` (`category_id`),
-  KEY `fk_production_unit` (`unit_id`),
-  KEY `fk_production_status` (`status_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro productos elaborados en producción';
 
 -- --------------------------------------------------------
 
@@ -556,10 +494,10 @@ CREATE TABLE `purchases` (
   `reference` varchar(100) NULL COMMENT 'Referencia del pago',
   `received_status` int(10) UNSIGNED NOT NULL DEFAULT 6 COMMENT 'Estado del registro: 6=pending, 8=received, 9=cancelled, 10=returned',
   `notes` text NULL COMMENT 'Notas de la compra',
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `paid_at` timestamp NULL COMMENT 'Fecha del pago', 
   `received_at` timestamp NULL COMMENT 'Fecha de recepción',
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_purchase_folio` (`folio`),
   KEY `idx_purchase_date` (`created_at`),
@@ -576,24 +514,6 @@ CREATE TABLE `purchases` (
 -- --------------------------------------------------------
 
 --
--- 25. Estructura de tabla para `recipes`
--- Registro de recetas e insumos
---
-CREATE TABLE `recipes` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `type` enum('menu','production') NOT NULL COMMENT 'Tipo de uso: menu o produccion',
-  `product_id` int(10) UNSIGNED NOT NULL COMMENT 'Producto (unidad base)',
-  `supply_type` enum('product','production') NOT NULL COMMENT 'Tipo de materia prima: producto o produccion',
-  `supply_id` int(10) UNSIGNED NOT NULL COMMENT 'Materia prima (unidad base)',
-  `quantity` decimal(12,4) NOT NULL COMMENT 'Cantidad de materia prima (unidad base)',
-  PRIMARY KEY (`id`),
-  KEY `idx_recipe_product` (`product_id`),
-  KEY `idx_recipe_supply` (`supply_type`, `supply_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de recetas e insumos';
-
--- --------------------------------------------------------
-
---
 -- 26. Estructura de tabla para `role_permissions`
 -- Asignación de permisos a roles
 --
@@ -602,7 +522,7 @@ CREATE TABLE `role_permissions` (
   `role_id` int(10) UNSIGNED NOT NULL COMMENT 'Rol',
   `permission_id` int(10) UNSIGNED NOT NULL COMMENT 'Permiso',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estado del registro: 1=active, 3=suspended, 5=archived',
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_permission` (`role_id`,`permission_id`),
   KEY `fk_permission_role` (`permission_id`),
@@ -620,7 +540,7 @@ CREATE TABLE `roles` (
   `code` varchar(50) NOT NULL,
   `name` varchar(100) NOT NULL,
   `description` varchar(255) NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_code` (`code`),
   UNIQUE KEY `uk_role_name` (`name`)
@@ -717,8 +637,8 @@ CREATE TABLE `statuses` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre del estado',
   `color` int(10) UNSIGNED NULL COMMENT 'Color asociado al estado',
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_status_color` (`color`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla para el registro de estados transaccionales';
@@ -739,7 +659,7 @@ CREATE TABLE `stock_movements` (
   `record_id` int(10) UNSIGNED NULL COMMENT 'ID del registro origen',
   `batch_id` int(10) UNSIGNED NULL COMMENT 'ID del lote',
   `notes` text NULL COMMENT 'Notas',
-  `created_at` timestamp NULL DEFAULT current_timestamp() COMMENT 'Fecha del movimiento',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'Fecha del movimiento',
   PRIMARY KEY (`id`),
   KEY `idx_product_movement` (`product_id`),
   KEY `idx_stock_systable` (`table_id`,`record_id`,`created_at`),
@@ -855,31 +775,11 @@ CREATE TABLE `system_tables` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre de la tabla',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus de la tabla: 1=active, 2=inactive, 4=discontinued, 5=archived',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_systable_name` (`name`),
   KEY `fk_systable_status` (`status_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de todas las tablas del sistema';
-
--- --------------------------------------------------------
-
---
--- 39. Estructura de tabla para `tables`
--- Registro de mesas de servicio
---
-CREATE TABLE `tables` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL COMMENT 'Nombre de la mesa o entidad',
-  `area_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Relaciona la tabla de areas',
-  `capacity` int(10) UNSIGNED NOT NULL DEFAULT 4 COMMENT 'Capacidad de personas',
-  `use_status_id` int(10) UNSIGNED NOT NULL DEFAULT 12 COMMENT 'Estado de uso: 11=open, 12=closed',
-  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=active, 3=suspended, 5=archived',
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `fk_tables_area` (`area_id`),
-  KEY `fk_tables_use_status` (`use_status_id`),
-  KEY `fk_tables_status` (`status_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de mesas de servicio';
 
 -- --------------------------------------------------------
 
@@ -1036,10 +936,6 @@ ALTER TABLE `customers`
   ADD CONSTRAINT `fk_customers_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_cc_status` FOREIGN KEY (`credit_status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
--- Filtros para `departments`
-ALTER TABLE `departments`
-  ADD CONSTRAINT `fk_departments_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
-
 -- Filtros para `expense_categories`
 ALTER TABLE `expense_categories`
   ADD CONSTRAINT `fk_expense_categories_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
@@ -1061,12 +957,6 @@ ALTER TABLE `ledgers`
   ADD CONSTRAINT `fk_ledger_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_ledger_systable` FOREIGN KEY (`table_id`) REFERENCES `system_tables` (`id`) ON UPDATE CASCADE;
 
--- Filtros para `menu`
-ALTER TABLE `menu`
-  ADD CONSTRAINT `fk_menu_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_menu_area` FOREIGN KEY (`area_id`) REFERENCES `areas` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_menu_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
-
 -- Filtros para `payment_methods`
 ALTER TABLE `payment_methods`
   ADD CONSTRAINT `fk_payment_account_in` FOREIGN KEY (`account_in`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE,
@@ -1078,12 +968,6 @@ ALTER TABLE `product_units`
   ADD CONSTRAINT `fk_unit_master` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_unit_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_unit_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON UPDATE CASCADE;
-
--- Filtros para `production`
-ALTER TABLE `production`
-  ADD CONSTRAINT `fk_production_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_production_unit` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_production_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `products`
 ALTER TABLE `products`
@@ -1107,10 +991,6 @@ ALTER TABLE `purchases`
   ADD CONSTRAINT `fk_purchase_method` FOREIGN KEY (`method_id`) REFERENCES `payment_methods` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_purchase_paid_status` FOREIGN KEY (`paid_status`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_purchase_received_status` FOREIGN KEY (`received_status`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
-
--- Filtros para `recipes`
-ALTER TABLE `recipes`
-  ADD CONSTRAINT `fk_recipes_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `role_permissions`
 ALTER TABLE `role_permissions`
@@ -1173,12 +1053,6 @@ ALTER TABLE `system_logs`
 -- Filtros para `system_tables`
 ALTER TABLE `system_tables`
   ADD CONSTRAINT `fk_sys_tables_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
-
--- Filtros para `tables`
-ALTER TABLE `tables`
-  ADD CONSTRAINT `fk_tables_area` FOREIGN KEY (`area_id`) REFERENCES `areas` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_tables_use_status` FOREIGN KEY (`use_status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_tables_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `till_movements`
 ALTER TABLE `till_movements`

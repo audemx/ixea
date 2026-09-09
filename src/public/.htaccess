@@ -5,8 +5,8 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 3. FORZAR HTTPS SOLO EN PRODUCCIÓN (Ignora localhost e IPs locales para Docker)
-    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    # 3. FORZAR HTTPS SOLO EN PRODUCCIÓN (Ignora localhost, *.localhost e IPs locales)
+    RewriteCond %{HTTP_HOST} !localhost [NC]
     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

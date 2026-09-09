@@ -11,16 +11,73 @@ use App\Database\Connection;
 
 Connection::boot();
 
-// 1. Obtener y limpiar la URI (remueve la barra final extra salvo en la raíz)
+// 1. Limpieza de URI
 $rawUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestUri = rtrim($rawUri, '/');
-
-// Si la ruta queda vacía (al entrar a localhost:8000/), la asignamos como '/'
 if (empty($requestUri)) {
     $requestUri = '/';
 }
 
-// 2. Tabla de Enrutamiento
+// 2. ENRUTADOR DINÁMICO DE MÓDULOS (/modules/{code})
+if (str_starts_with($requestUri, '/modules/')) {
+    $currentUser = Security::authorize(); // Validar sesión
+
+    // Extraemos el código del módulo (ej. "/modules/pos" -> "pos")
+    $moduleCode = str_replace('/modules/', '', $requestUri);
+    
+    // Construimos la ruta física dentro de la carpeta privada /app/views/modules/
+    $modulePath = __DIR__ . '/../../app/modules/' . $moduleCode . '.php';
+
+    if (file_exists($modulePath)) {
+        require_once $modulePath;
+        exit;
+    } else {
+        http_response_code(404);
+        echo "404 - Módulo no encontrado: " . htmlspecialchars($moduleCode);
+        exit;
+    }
+}
+
+// 3. ENRUTADOR DINÁMICO PARA API (/api/{version}/{modulo}/{accion})
+if (str_starts_with($requestUri, '/api/')) {
+    $currentUser = Security::authorize(); // Validar sesión o token
+
+    // Dividir la URI en partes: ["api", "{version}", "{module}", "{action}"]
+    $parts = explode('/', trim($requestUri, '/'));
+
+    $version = $parts[1] ?? null; // "v1"
+    $module  = $parts[2] ?? null; // "bistro-pos"
+    $action  = $parts[3] ?? null; // "get-tables"
+
+    if ($version && $module && $action) {
+        $versionNamespace = strtoupper($version); // "V1"
+        
+        // "bistro-pos" -> "BistroPos"
+        $controllerClass = ucfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $module)))); 
+        $controllerName  = "App\\Controllers\\{$versionNamespace}\\{$controllerClass}";
+        
+        // "get-balances" -> "getBalances"
+        $methodName = lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $action))));
+
+        // Ejecutar si la clase y el método existen
+        if (class_exists($controllerName) && method_exists($controllerName, $methodName)) {
+            $controller = new $controllerName();
+            $controller->$methodName();
+            exit;
+        }
+    }
+
+    // Respuesta genérica 404 para producción (sin exponer rutas internas)
+    http_response_code(404);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Endpoint no encontrado'
+    ]);
+    exit;
+}
+
+// 4. Tabla de Enrutamiento
 switch ($requestUri) {
 
     // =========================================================================
@@ -58,16 +115,17 @@ switch ($requestUri) {
         require_once __DIR__ . '/../../app/views/till.php';
         break;
 
-    case '/commander':
-    case '/eros/commander': // Rol 3 (Comandero / Vendedor)
+    case '/bistro-pos':
+    case '/eros/bistro-pos':
+    case '/modules/bistro-pos': // Rol 3 (Comandero / Vendedor)
         $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/commander.php';
+        require_once __DIR__ . '/../../app/views/bistro-pos.php';
         break;
 
-    case '/kitchen':
-    case '/eros/kitchen': // Rol 4 (Cocina)
+    case '/bistro-kds':
+    case '/eros/bistro-kds': // Rol 4 (Cocina)
         $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/kitchen.php';
+        require_once __DIR__ . '/../../app/views/bistro-kds.php';
         break;
 
     case '/clients':
