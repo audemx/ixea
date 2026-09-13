@@ -36,6 +36,13 @@ window.IXEA_USER = {
     is_super: <?= json_encode((bool)$currentUser['isSuper']); ?>
 };
 
+const IxeaUser = {
+    userId: <?= json_encode($currentUser['userId']); ?>,
+    userName: <?= json_encode($currentUser['userName']); ?>,
+    roleName: <?= json_encode($currentUser['roleName']); ?>,
+    userEmail: <?= json_encode($currentUser['userEmail']); ?>,
+};
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')

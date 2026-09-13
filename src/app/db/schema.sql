@@ -27,7 +27,7 @@ CREATE TABLE `apps` (
   `title` varchar(50) NOT NULL COMMENT 'Nombre visible de la app',
   `permission_id` int(10) UNSIGNED NOT NULL COMMENT 'Relación con el permiso requerido',
   `icon` varchar(50) NOT NULL COMMENT 'Clase del icono Bootstrap',
-  `color_id` int(10) UNSIGNED NOT NULL COMMENT 'Relación con system_colors',
+  `color_id` int(10) UNSIGNED NOT NULL COMMENT 'Relación con sys_colors',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=active, 3=suspended, 5=archived',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_apps_code` (`code`),
@@ -655,7 +655,7 @@ CREATE TABLE `stock_movements` (
   `quantity` decimal(12,4) NOT NULL COMMENT 'Cantidad en unidad principal',
   `type` enum('in','out') NOT NULL COMMENT 'Tipo de movimiento',
   `unit_id` int(10) UNSIGNED NULL COMMENT 'Unidad de referencia',
-  `table_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla system_tables',
+  `table_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla sys_tables',
   `record_id` int(10) UNSIGNED NULL COMMENT 'ID del registro origen',
   `batch_id` int(10) UNSIGNED NULL COMMENT 'ID del lote',
   `notes` text NULL COMMENT 'Notas',
@@ -713,10 +713,10 @@ CREATE TABLE `suppliers` (
 -- --------------------------------------------------------
 
 --
--- 35. Estructura de tabla para `system_actions`
+-- 35. Estructura de tabla para `sys_actions`
 -- Registro de acciones del sistema que puede realizar un usuario
 --
-CREATE TABLE `system_actions` (
+CREATE TABLE `sys_actions` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre de la acción',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus de la acción: 1=active, 2=inactive, 3=suspended, 5=archived',
@@ -728,10 +728,10 @@ CREATE TABLE `system_actions` (
 -- --------------------------------------------------------
 
 --
--- 36. Estructura de tabla para `system_colors`
+-- 36. Estructura de tabla para `sys_colors`
 -- Registro de colores del sistema
 --
-CREATE TABLE `system_colors` (
+CREATE TABLE `sys_colors` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre del color',
   `hex` varchar(7) NOT NULL COMMENT 'Código hexadecimal del color',
@@ -744,19 +744,19 @@ CREATE TABLE `system_colors` (
 -- --------------------------------------------------------
 
 --
--- 37. Estructura de tabla para `system_logs`
+-- 37. Estructura de tabla para `sys_logs`
 -- Registro de bitácora del sistema
 --
-CREATE TABLE `system_logs` (
+CREATE TABLE `sys_logs` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla users',
-  `action_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla system_actions',
+  `action_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla sys_actions',
   `status_id` int(10) UNSIGNED NOT NULL COMMENT 'Estatus del proceso 14=success, 15=error',
-  `details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
-  `table_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla system_tables',
+  `table_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla sys_tables',
   `record_id` int(10) UNSIGNED NULL COMMENT 'ID de la referencia',
-  `ip_address` varchar(45) NULL,
-  `user_agent` varchar(512) NULL,
+  `details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
+  `ip` varchar(45) NULL,
+  `agent` varchar(512) NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `fk_syslog_user` (`user_id`),
@@ -768,12 +768,14 @@ CREATE TABLE `system_logs` (
 -- --------------------------------------------------------
 
 --
--- 38. Estructura de tabla para `system_tables`
+-- 38. Estructura de tabla para `sys_tables`
 -- Registro de todas las tablas del sistema
 --
-CREATE TABLE `system_tables` (
+CREATE TABLE `sys_tables` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre de la tabla',
+  `is_enum` tinyint(1) DEFAULT 0 COMMENT '1=es una tabla de enumeración',
+  `column_name` varchar(50) NULL COMMENT 'Nombre de la columna para el enum',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus de la tabla: 1=active, 2=inactive, 4=discontinued, 5=archived',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
@@ -886,7 +888,7 @@ CREATE TABLE `users` (
 -- Filtros para `apps`
 ALTER TABLE `apps`
   ADD CONSTRAINT `fk_apps_permissions` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_apps_colors` FOREIGN KEY (`color_id`) REFERENCES `system_colors` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_apps_colors` FOREIGN KEY (`color_id`) REFERENCES `sys_colors` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_apps_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `accounts`
@@ -955,7 +957,7 @@ ALTER TABLE `finance_snapshots`
 -- Filtros para `ledgers`
 ALTER TABLE `ledgers`
   ADD CONSTRAINT `fk_ledger_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_ledger_systable` FOREIGN KEY (`table_id`) REFERENCES `system_tables` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_ledger_systable` FOREIGN KEY (`table_id`) REFERENCES `sys_tables` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `payment_methods`
 ALTER TABLE `payment_methods`
@@ -1020,13 +1022,13 @@ ALTER TABLE `shifts`
 
 -- Filtros para `statuses`
 ALTER TABLE `statuses`
-  ADD CONSTRAINT `fk_statuses_color` FOREIGN KEY (`color`) REFERENCES `system_colors` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_statuses_color` FOREIGN KEY (`color`) REFERENCES `sys_colors` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `stock_movements`
 ALTER TABLE `stock_movements`
   ADD CONSTRAINT `fk_stockmove_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_stockmove_unit` FOREIGN KEY (`unit_id`) REFERENCES `product_units` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_stockmove_systable` FOREIGN KEY (`table_id`) REFERENCES `system_tables` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_stockmove_systable` FOREIGN KEY (`table_id`) REFERENCES `sys_tables` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_stockmove_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `supplier_credit_profiles`
@@ -1039,19 +1041,19 @@ ALTER TABLE `suppliers`
   ADD CONSTRAINT `fk_supplier_bank` FOREIGN KEY (`bank_account`) REFERENCES `bank_accounts` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_supplier_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
--- Filtros para `system_actions`
-ALTER TABLE `system_actions`
-  ADD CONSTRAINT `fk_system_actions_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
+-- Filtros para `sys_actions`
+ALTER TABLE `sys_actions`
+  ADD CONSTRAINT `fk_sys_actions_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
--- Filtros para `system_logs`
-ALTER TABLE `system_logs`
+-- Filtros para `sys_logs`
+ALTER TABLE `sys_logs`
   ADD CONSTRAINT `fk_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_logs_action` FOREIGN KEY (`action_id`) REFERENCES `system_actions` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_logs_systable` FOREIGN KEY (`table_id`) REFERENCES `system_tables` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_logs_action` FOREIGN KEY (`action_id`) REFERENCES `sys_actions` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_logs_systable` FOREIGN KEY (`table_id`) REFERENCES `sys_tables` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_logs_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
--- Filtros para `system_tables`
-ALTER TABLE `system_tables`
+-- Filtros para `sys_tables`
+ALTER TABLE `sys_tables`
   ADD CONSTRAINT `fk_sys_tables_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `till_movements`
@@ -1059,7 +1061,7 @@ ALTER TABLE `till_movements`
   ADD CONSTRAINT `fk_tillmove_shift` FOREIGN KEY (`shift_id`) REFERENCES `shifts` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_tillmove_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_tillmove_method` FOREIGN KEY (`method_id`) REFERENCES `payment_methods` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_tillmove_systable` FOREIGN KEY (`table_id`) REFERENCES `system_tables` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_tillmove_systable` FOREIGN KEY (`table_id`) REFERENCES `sys_tables` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `units`
 ALTER TABLE `units`

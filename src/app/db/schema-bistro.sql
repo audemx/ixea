@@ -12,6 +12,24 @@ SET time_zone = "-06:00";
 USE `ixea_db`;
 
 --
+-- 1. Estructura de tabla para `channels`
+-- Registro de los canales de venta
+--
+CREATE TABLE `channels`(
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL COMMENT 'Nombre del canal',
+  `description` text NULL COMMENT 'Descripción del canal',
+  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=Active, 3=Suspended, 5=Archived',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_channels_name` (`name`),
+  KEY `idx_channels_status` (`status_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de canales';
+
+-- --------------------------------------------------------
+
+--
 -- 1. Estructura de tabla para `menu`
 -- Registro de la carta o menú del restaurante o negocio de comidas
 --
@@ -20,7 +38,7 @@ CREATE TABLE `menu` (
   `name` varchar(100) NOT NULL COMMENT 'Nombre del item',
   `description` varchar(255) NOT NULL COMMENT 'Descripción del item',
   `category_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de categorías',
-  `area_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de áreas',
+  `station_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de estaciones',
   `price` decimal(10,2) NOT NULL COMMENT 'Precio del item',
   `cost` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Costo del item',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estado del registro: 1=active, 3=suspended, 4=discontinued, 5=archived',
@@ -28,8 +46,7 @@ CREATE TABLE `menu` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_menu_category` (`category_id`),
-  KEY `idx_menu_area` (`area_id`),
-  KEY `idx_menu_modifier` (`modifier_id`),
+  KEY `idx_menu_station` (`station_id`),
   KEY `idx_menu_status` (`status_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de la carta o menú del restaurante o negocio de comidas';
 
@@ -115,7 +132,7 @@ CREATE TABLE `modifier_groups` (
 
 --
 -- 20. Estructura de tabla para `modifier_grouped`
--- Registro de modificadores agrupados
+-- Registro de modificadores agrupados: Relaciona modificadores con grupos
 --
 CREATE TABLE `modifier_grouped` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -178,7 +195,7 @@ CREATE TABLE `order_items` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` int(10) UNSIGNED NOT NULL COMMENT 'Orden',
   `item` int(10) UNSIGNED NOT NULL COMMENT 'Número de ítem',
-  `target_to` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Persona que ordenó',
+  `target` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Persona que ordenó',
   `product_id` int(10) UNSIGNED NOT NULL COMMENT 'Item de la orden',
   `notes` text NULL COMMENT 'Notas adicionales de la orden',
   `status_id` int(10) UNSIGNED NOT NULL COMMENT 'Estado del registro: 6=pending, 8=delivered, 9=cancelled, 10=returned',
@@ -288,7 +305,7 @@ CREATE TABLE `tables` (
   `pos_y` int(10) UNSIGNED NOT NULL COMMENT 'Posición en el eje Y',
   `size` enum('S', 'M', 'L') NOT NULL COMMENT 'Tamaño de la mesa',
   `orientation` enum('H', 'V') NOT NULL COMMENT 'Orientación de la mesa',
-  `persons_count` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Número de personas en la mesa',
+  `count` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Número de personas en la mesa',
   `use_status_id` int(10) UNSIGNED NOT NULL DEFAULT 12 COMMENT 'Estado de uso: 6=pending, 11=open, 12=closed',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=active, 3=suspended, 5=archived',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -303,10 +320,14 @@ CREATE TABLE `tables` (
 -- RESTRICCIONES Y LLAVES FORÁNEAS
 -- --------------------------------------------------------
 
+-- Filtros para `channels`
+ALTER TABLE `channels`
+  ADD CONSTRAINT `fk_channels_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
+
 -- Filtros para `menu`
 ALTER TABLE `menu`
   ADD CONSTRAINT `fk_menu_category` FOREIGN KEY (`category_id`) REFERENCES `menu_categories` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_menu_area` FOREIGN KEY (`area_id`) REFERENCES `areas` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_menu_station` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_menu_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `menu_categories`

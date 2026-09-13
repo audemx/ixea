@@ -18,9 +18,9 @@
 
         <!-- Mesero -->
         <div class="flex items-center space-x-2 text-xs flex-shrink-0">
-            <button onclick="BistroPosApp.openModal('auth', { backdrop: 'md',width: '80' })"
+            <button onclick="IxeaComponents.openModal('auth', { backdrop: 'md',width: '80' })"
                 class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded-xl transition">
-                <span class="font-semibold text-slate-200 hidden sm:inline"><?php echo $currentUser['userName'] ?></span>
+                <span id="bistro-pos-user" class="font-semibold text-slate-200 hidden sm:inline"><?php echo $currentUser['userName'] ?></span>
             </button>
         </div>
     </header>
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="BistroPosApp.openModal('bill', {backdrop: 'md', maxw: 'sm', flex: 'col'})"
+                    <button onclick="IxeaComponents.openModal('bill', {backdrop: 'md', maxw: 'sm', flex: 'col'})"
                         class="bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold py-3 rounded-xl text-xs shadow flex items-center justify-center space-x-1">
                         <span>🧾</span>
                         <span>Pedir Cuenta</span>
@@ -129,7 +129,7 @@
                 </button>
             </div>
 
-            <button onclick="BistroPosApp.closeModal('modal-split-options'); BistroPosApp.openModal('modal-bill-confirm')"
+            <button onclick="IxeaComponents.closeModal(); IxeaComponents.openModal('modal-bill-confirm')"
                 class="text-xs text-slate-400 hover:text-white font-semibold underline">
                 ⬅ Regresar a confirmación
             </button>
@@ -138,6 +138,7 @@
 
 </div>
 
+<!-- Template de mesa -->
 <template id="bistro-pos-template-table">
     <button class="bistro-pos-table-btn bg-slate-900 border-2 p-3 rounded-xl flex flex-col items-center justify-between active:scale-95 transition">
         <span class="bistro-pos-table-name text-xs font-semibold text-slate-400"></span>
@@ -146,64 +147,37 @@
     </button>
 </template>
 
+<!-- Modal de modificadores -->
 <template id="bistro-pos-template-modifiers">
-    <div class="p-4 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
-        <div>
-            <h3 class="font-bold text-lg text-white">🐟 Pescado Frito</h3>
-            <p class="text-xs text-emerald-400 font-semibold">Editar orden activa</p>
-        </div>
-        <button onclick="BistroPosApp.closeModal()" class="text-slate-400 hover:text-white font-bold text-xl px-2">✕</button>
-    </div>
-
-    <div class="p-4 overflow-y-auto space-y-4 flex-1">
-        <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Término del pescado</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button class="py-2.5 px-3 bg-indigo-600 text-white font-bold text-xs rounded-xl border border-indigo-500">Medio</button>
-                <button class="py-2.5 px-3 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl border border-slate-700">3/4</button>
-                <button class="py-2.5 px-3 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl border border-slate-700">Bien Cocido</button>
-            </div>
+    <div class="flex flex-col w-full h-full max-h-[80vh]">
+        <!-- Encabezado Estático -->
+        <div class="px-3 border-b border-slate-700 flex justify-between items-center shrink-0">
+            <h3 id="bistro-pos-modifier-title" class="font-bold text-lg text-white">---</h3>
         </div>
 
-        <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Remover ingredientes</label>
-            <div class="grid grid-cols-2 gap-2">
-                <button class="py-2.5 px-3 bg-rose-500/20 text-rose-300 font-bold text-xs rounded-xl border border-rose-500/40 text-left">🚫 Sin Cebolla</button>
-                <button class="py-2.5 px-3 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 text-left">🚫 Sin Tomate</button>
-            </div>
+        <!-- Contenido Dinámico con Scroll Interno -->
+        <div id="bistro-pos-modifier-content" class="px-2 py-2 overflow-y-auto space-y-5 flex-1 min-h-0 text-center">
+            <!-- Grupos y Modificadores -->
         </div>
 
-        <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Agregar Extras</label>
-            <div class="grid grid-cols-2 gap-2">
-                <button class="py-2.5 px-3 bg-indigo-600/30 text-indigo-200 font-bold text-xs rounded-xl border border-indigo-500 text-left flex justify-between">
-                    <span>🍟 Papas Fritas</span>
-                    <span class="text-emerald-400">+$1.50</span>
-                </button>
-                <button class="py-2.5 px-3 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 text-left flex justify-between">
-                    <span>🥗 Ensalada</span>
-                    <span class="text-emerald-400">+$2.00</span>
-                </button>
-            </div>
+        <!-- Notas para cocina (Estático) -->
+        <div class="px-2 pb-2 border-t border-slate-800 shrink-0">
+            <input type="text" id="bistro-pos-modifier-notes" placeholder="Nota para cocina..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nota para cocina</label>
-            <input type="text" placeholder="Ej. Salsa aparte..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+        <!-- Botones de Acción Estáticos -->
+        <div class="px-2 pt-2 border-t border-slate-700 flex space-x-2 shrink-0">
+            <button onclick="IxeaComponents.closeModal()" class="w-1/3 bg-slate-600 hover:bg-slate-500 text-white font-bold mx-3 py-2.5 rounded-xl text-sm transition">
+                Cancelar
+            </button>
+            <button onclick="BistroPosApp.saveModifiers()" class="w-2/3 bg-blue-600 hover:bg-blue-500 text-white font-bold mx-3 py-2.5 rounded-xl text-sm shadow-lg transition">
+                Aceptar
+            </button>
         </div>
-    </div>
-
-    <div class="p-4 bg-slate-900 border-t border-slate-700 flex space-x-2">
-        <button onclick="BistroPosApp.closeModal('modal-modifiers')" class="w-1/3 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold py-3 rounded-xl text-xs transition flex items-center justify-center space-x-1">
-            <span>🗑️</span>
-            <span>Eliminar</span>
-        </button>
-        <button onclick="BistroPosApp.closeModal('modal-modifiers')" class="w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">
-            Guardar Cambios
-        </button>
     </div>
 </template>
 
+<!-- Modal de cambio de mesero -->
 <template id="bistro-pos-template-auth">
     <h3 class="font-bold text-lg text-white mb-1">Cambiar Mesero</h3>
     <p class="text-xs text-slate-400 mb-4">Ingresa tu PIN de 4 dígitos</p>
@@ -225,12 +199,13 @@
         <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">7</button>
         <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">8</button>
         <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">9</button>
-        <button onclick="BistroPosApp.closeModal()" class="bg-rose-500/20 text-rose-300 py-3 rounded-xl font-bold text-xs border border-rose-500/30">Cancel</button>
+        <button onclick="IxeaComponents.closeModal()" class="bg-rose-500/20 text-rose-300 py-3 rounded-xl font-bold text-xs border border-rose-500/30">Cancel</button>
         <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">0</button>
         <button class="bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-sm">⌫</button>
     </div>
 </template>
 
+<!-- Modal de confirmación de cuenta -->
 <template id="bistro-pos-template-bill">
     <h3 class="font-bold text-lg text-white mb-1">Confirmar Solicitud de Cuenta</h3>
 
@@ -250,7 +225,7 @@
         </button>
     </div>
 
-    <button onclick="BistroPosApp.closeModal('modal-bill-confirm')" class="text-xs text-slate-400 hover:text-white font-semibold underline">
+    <button onclick="IxeaComponents.closeModal()" class="text-xs text-slate-400 hover:text-white font-semibold underline">
         Cancelar y continuar pidiendo
     </button>
 </template>

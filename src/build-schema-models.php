@@ -1,14 +1,6 @@
 <?php
 /**
- * IXEA EROS - Generator: Eloquent Models
- * 
- * ⚠️ NOTA DE ARQUITECTURA / DEPLOYMENT:
- * Este script NO forma parte de la lógica en tiempo de ejecución del servidor web.
- * Es un script utilitario que se ejecuta localmente durante la fase de BUILD (build.php)
- * para inspeccionar la base de datos local y regenerar los modelos PHP en /models.
- * 
- * Por esta razón, gestiona su propia conexión directa a localhost (127.0.0.1)
- * en lugar de depender de la configuración del entorno Docker/Servidor.
+ * IXEA EROS - Generator: Eloquent Models (Con relaciones automáticas completas y sin duplicados)
  */
 
 require_once __DIR__ . '/app/vendor/autoload.php';
@@ -18,30 +10,16 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 Connection::boot();
 
-/**
- * Elimina un directorio y todo su contenido de forma recursiva
- */
 function deleteDirectory($dir) {
-    if (!file_exists($dir)) {
-        return true;
-    }
-    if (!is_dir($dir)) {
-        return unlink($dir);
-    }
+    if (!file_exists($dir)) return true;
+    if (!is_dir($dir)) return unlink($dir);
     foreach (scandir($dir) as $item) {
-        if ($item == '.' || $item == '..') {
-            continue;
-        }
-        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
-            return false;
-        }
+        if ($item == '.' || $item == '..') continue;
+        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
     }
     return rmdir($dir);
 }
 
-/**
- * Función helper para singularizar nombres de clases
- */
 function singularize($word) {
     $rules = [
         '/(quiz)zes$/i' => '$1',
@@ -68,13 +46,16 @@ function singularize($word) {
         '/(s)tatus$/i' => '$1tatus',
         '/s$/i' => ''
     ];
-
     foreach ($rules as $pattern => $replacement) {
         if (preg_match($pattern, $word)) {
             return preg_replace($pattern, $replacement, $word);
         }
     }
     return $word;
+}
+
+function pluralize($word) {
+    return $word . 's';
 }
 
 function columnToMethodName($columnName) {
@@ -95,16 +76,40 @@ try {
     $dbName = Capsule::connection()->getDatabaseName();
     $modelsDir = __DIR__ . '/app/db/models';
 
-    // Reset total de la carpeta /models
     deleteDirectory($modelsDir);
     mkdir($modelsDir, 0777, true);
 
-    // 1. Obtener todas las tablas de la base de datos
     $tables = Capsule::select("
         SELECT TABLE_NAME 
         FROM information_schema.TABLES 
         WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
     ", [$dbName]);
+
+    // 1. Mapeo global de todas las Foreign Keys
+    $allForeignKeys = Capsule::select("
+        SELECT 
+            TABLE_NAME,
+            COLUMN_NAME, 
+            REFERENCED_TABLE_NAME, 
+            REFERENCED_COLUMN_NAME 
+        FROM information_schema.KEY_COLUMN_USAGE 
+        WHERE TABLE_SCHEMA = ? 
+          AND REFERENCED_TABLE_NAME IS NOT NULL
+    ", [$dbName]);
+
+    $fkByTable = [];
+    $referencedByTable = [];
+    foreach ($allForeignKeys as $fk) {
+        $fkByTable[$fk->TABLE_NAME][] = $fk;
+        $referencedByTable[$fk->REFERENCED_TABLE_NAME][] = $fk;
+    }
+
+    $pivotTables = [];
+    foreach ($fkByTable as $tName => $fks) {
+        if (count($fks) === 2) {
+            $pivotTables[$tName] = $fks;
+        }
+    }
 
     $count = 0;
 
@@ -113,8 +118,8 @@ try {
         if ($tableName === 'migrations') continue;
 
         $className = tableNameToClassName($tableName);
+        $isPivot = isset($pivotTables[$tableName]);
 
-        // 2. Comprobar si existen exactamente created_at y updated_at
         $columns = Capsule::select("
             SELECT COLUMN_NAME 
             FROM information_schema.COLUMNS 
@@ -124,19 +129,6 @@ try {
         $columnNames = array_column($columns, 'COLUMN_NAME');
         $hasTimestamps = in_array('created_at', $columnNames) && in_array('updated_at', $columnNames);
 
-        // 3. Obtener relaciones de Foreign Keys
-        $foreignKeys = Capsule::select("
-            SELECT 
-                COLUMN_NAME, 
-                REFERENCED_TABLE_NAME, 
-                REFERENCED_COLUMN_NAME 
-            FROM information_schema.KEY_COLUMN_USAGE 
-            WHERE TABLE_SCHEMA = ? 
-              AND TABLE_NAME = ? 
-              AND REFERENCED_TABLE_NAME IS NOT NULL
-        ", [$dbName, $tableName]);
-
-        // 4. Construir el archivo de la clase Eloquent
         $code  = "<?php\n\n";
         $code .= "namespace App\\Models;\n\n";
         $code .= "use Illuminate\\Database\\Eloquent\\Model;\n\n";
@@ -145,17 +137,100 @@ try {
         $code .= "    public \$timestamps = " . ($hasTimestamps ? 'true' : 'false') . ";\n";
         $code .= "    protected \$guarded = [];\n";
 
-        // Generar relaciones BelongsTo automáticamente
-        if (!empty($foreignKeys)) {
+        $hasRelations = false;
+
+        // A. Relaciones BelongsTo
+        if (!empty($fkByTable[$tableName])) {
+            $hasRelations = true;
             $code .= "\n    // --- Relaciones BelongsTo ---\n";
-            foreach ($foreignKeys as $fk) {
+            foreach ($fkByTable[$tableName] as $fk) {
                 $relatedClass = tableNameToClassName($fk->REFERENCED_TABLE_NAME);
                 $methodName   = columnToMethodName($fk->COLUMN_NAME);
-                $fkColumn     = $fk->COLUMN_NAME;
+                $code .= "\n    public function {$methodName}()\n";
+                $code .= "    {\n";
+                $code .= "        return \$this->belongsTo({$relatedClass}::class, '{$fk->COLUMN_NAME}');\n";
+                $code .= "    }\n";
+            }
+        }
+
+        // B. Relaciones HasMany (Sin duplicación de nombres de métodos)
+        if (!$isPivot && !empty($referencedByTable[$tableName])) {
+            if (!$hasRelations) $code .= "\n";
+            $hasRelations = true;
+            $code .= "    // --- Relaciones HasMany ---\n";
+
+            // Contar cuántas FKs apuntan desde la misma tabla hacia esta tabla
+            $tableReferenceCounts = [];
+            foreach ($referencedByTable[$tableName] as $ref) {
+                if (isset($pivotTables[$ref->TABLE_NAME])) continue;
+                $tableReferenceCounts[$ref->TABLE_NAME] = ($tableReferenceCounts[$ref->TABLE_NAME] ?? 0) + 1;
+            }
+
+            $usedMethods = [];
+
+            foreach ($referencedByTable[$tableName] as $ref) {
+                if (isset($pivotTables[$ref->TABLE_NAME])) continue;
+
+                $relatedClass = tableNameToClassName($ref->TABLE_NAME);
+                $baseMethodName = lcfirst(pluralize($relatedClass));
+
+                // Si la tabla origen tiene más de 1 FK hacia esta tabla, desambiguamos con la columna
+                if ($tableReferenceCounts[$ref->TABLE_NAME] > 1) {
+                    $prefix = columnToMethodName($ref->COLUMN_NAME);
+                    $methodName = $prefix . ucfirst($baseMethodName);
+                } else {
+                    $methodName = $baseMethodName;
+                }
+
+                // Evitar duplicados exactos si existen FKs idénticas
+                if (in_array($methodName, $usedMethods)) {
+                    continue;
+                }
+                $usedMethods[] = $methodName;
 
                 $code .= "\n    public function {$methodName}()\n";
                 $code .= "    {\n";
-                $code .= "        return \$this->belongsTo({$relatedClass}::class, '{$fkColumn}');\n";
+                $code .= "        return \$this->hasMany({$relatedClass}::class, '{$ref->COLUMN_NAME}');\n";
+                $code .= "    }\n";
+            }
+        }
+
+        // C. Relaciones BelongsToMany
+        $belongsToManyRelations = [];
+        foreach ($pivotTables as $pName => $pFks) {
+            $isPart = false;
+            $otherFk = null;
+            $myFk = null;
+            foreach ($pFks as $pTblFk) {
+                if ($pTblFk->REFERENCED_TABLE_NAME === $tableName) {
+                    $isPart = true;
+                    $myFk = $pTblFk;
+                } else {
+                    $otherFk = $pTblFk;
+                }
+            }
+            if ($isPart && $otherFk) {
+                $relatedClass = tableNameToClassName($otherFk->REFERENCED_TABLE_NAME);
+                $methodName   = lcfirst(pluralize($relatedClass));
+                
+                if (!isset($belongsToManyRelations[$methodName])) {
+                    $belongsToManyRelations[$methodName] = [
+                        'class' => $relatedClass,
+                        'pivot' => $pName,
+                        'foreignPivotKey' => $myFk->COLUMN_NAME,
+                        'relatedPivotKey' => $otherFk->COLUMN_NAME
+                    ];
+                }
+            }
+        }
+
+        if (!empty($belongsToManyRelations)) {
+            if (!$hasRelations) $code .= "\n";
+            $code .= "    // --- Relaciones BelongsToMany ---\n";
+            foreach ($belongsToManyRelations as $mName => $rel) {
+                $code .= "\n    public function {$mName}()\n";
+                $code .= "    {\n";
+                $code .= "        return \$this->belongsToMany({$rel['class']}::class, '{$rel['pivot']}', '{$rel['foreignPivotKey']}', '{$rel['relatedPivotKey']}');\n";
                 $code .= "    }\n";
             }
         }
@@ -167,7 +242,7 @@ try {
         $count++;
     }
 
-    echo "\n🎉 ¡Listo! Se limpió la carpeta y se regeneraron {$count} modelos.\n";
+    echo "\n🎉 ¡Listo! Se regeneraron {$count} modelos sin nombres de métodos duplicados.\n";
 
 } catch (\Exception $e) {
     echo "❌ Error al generar modelos: " . $e->getMessage() . "\n";

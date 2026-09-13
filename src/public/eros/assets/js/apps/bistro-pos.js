@@ -2,91 +2,141 @@ window.BistroPosApp = {
     // ==========================================
     // Variables de Estado
     // ==========================================
+    currentUser: IxeaUser.userId,
     categories: [],
     currentCategory: null,
     menu: [],
+    modifiers: [],
     tables: [],
     tablesHash: null,
     currentTable: null,
     personCount: 0,
     currentPerson: null,
-    cartItems: [],
+    cart: [],
+    activeDraftItem: null,
     isInitialized: false,
-    editingIndex: null,
+    swipeInitialized: false,
+    swipeListeners: [],
 
     // ==========================================
     // Funciones de Inicialización
     // ==========================================
     init: function () {
         if (this.isInitialized) return;
-        console.log("[BISTRO POS] Inicializando Punto de Venta...");
         this.isInitialized = true;
+        this.initCartSwipeListener();
         this.fetchMenu();
+        this.fetchModifiers();
         this.fetchCategories();
         this.fetchTables();
     },
 
-    destroy: function () {
-        this.isInitialized = false;
-        this.tablesHash = null;
-        this.currentTable = null;
-        this.personCount = 0;
-        this.currentPerson = null;
-        this.cartItems = [];
-        this.editingIndex = null;
+    /**
+     * Inicializa los listeners mediante delegación de eventos
+     */
+    initCartSwipeListener: function () {
+        const cartEl = document.getElementById('bistro-pos-cart');
+        if (!cartEl || this.swipeInitialized) return;
+
+        let activeItem = null;
+        let startX = 0;
+        let currentX = 0;
+        let isSwiping = false;
+
+        // 1. Definimos las funciones manejadoras (Handler functions)
+        const handleStart = (e) => {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const item = e.target.closest('.swipe-item');
+            if (!item) return;
+
+            if (activeItem && activeItem !== item) {
+                activeItem.style.transform = 'translateX(0px)';
+            }
+
+            activeItem = item;
+            startX = clientX;
+            currentX = clientX;
+            isSwiping = true;
+        };
+
+        const handleMove = (e) => {
+            if (!isSwiping || !activeItem) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            currentX = clientX;
+            const diffX = startX - currentX;
+
+            if (diffX > 0 && diffX <= 70) {
+                activeItem.style.transform = `translateX(-${diffX}px)`;
+            }
+        };
+
+        const handleEnd = () => {
+            if (!isSwiping || !activeItem) return;
+            isSwiping = false;
+            const diffX = startX - currentX;
+
+            if (diffX > 35) {
+                activeItem.style.transform = 'translateX(-64px)';
+            } else if (diffX < -10 || diffX <= 35) {
+                activeItem.style.transform = 'translateX(0px)';
+
+                if (Math.abs(diffX) < 5) {
+                    const index = parseInt(activeItem.dataset.index);
+                    if (!isNaN(index)) {
+                        this.modifyItem(index);
+                    }
+                }
+            }
+        };
+
+        const handleMouseLeave = () => {
+            if (isSwiping && activeItem) {
+                isSwiping = false;
+                activeItem.style.transform = 'translateX(0px)';
+            }
+        };
+
+        // 2. Guardamos las referencias en nuestro array swipeListeners
+        this.swipeListeners = [
+            { target: cartEl, type: 'touchstart', handler: handleStart, options: { passive: true } },
+            { target: cartEl, type: 'touchmove', handler: handleMove, options: { passive: true } },
+            { target: cartEl, type: 'touchend', handler: handleEnd, options: false },
+            { target: cartEl, type: 'mousedown', handler: handleStart, options: false },
+            { target: cartEl, type: 'mousemove', handler: handleMove, options: false },
+            { target: cartEl, type: 'mouseup', handler: handleEnd, options: false },
+            { target: cartEl, type: 'mouseleave', handler: handleMouseLeave, options: false }
+        ];
+
+        // 3. Adjuntamos los eventos
+        this.swipeListeners.forEach(listener => {
+            listener.target.addEventListener(listener.type, listener.handler, listener.options);
+        });
+
+        this.swipeInitialized = true;
     },
 
-    // ==========================================
-    // Gestión de Modales
-    // ==========================================
-    openModal: function (operation, options = {}) {
-        const modal = document.getElementById('bistro-pos-modal');
-        const template = document.getElementById(`bistro-pos-template-${operation}`);
-        if (!modal || !template) return;
-
-        modal.innerHTML = '';
-
-        let modalClassList = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4'
-        let contentClassList = 'bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-2xl';
-
-        // Definir clases del modal
-        options.backdrop ? modalClassList += ` backdrop-blur-${options.backdrop}` : modalClassList += ' backdrop-blur-sm';
-        modal.className = modalClassList;
-
-        // Definir clases del contenido
-        options.width ? contentClassList += ` w-${options.width}` : contentClassList += ' w-full';
-        options.maxw ? contentClassList += ` max-w-${options.maxw}` : contentClassList += '';
-        options.maxh ? contentClassList += ` max-h-${options.maxh}` : contentClassList += '';
-        options.xalign ? contentClassList += ` text-${options.xalign}` : contentClassList += ' text-center';
-        options.yalign ? contentClassList += ` items-${options.yalign}` : contentClassList += ' items-center';
-        options.scroll ? contentClassList += ` overflow-${options.scroll}` : contentClassList += ' overflow-hidden';
-        options.flex ? contentClassList += ` flex flex-${options.flex}` : contentClassList += '';
-
-        const child = document.createElement('div');
-        child.className = contentClassList;
-        console.log(contentClassList);
-        const clone = template.content.cloneNode(true);
-        child.appendChild(clone);
-        modal.appendChild(child);
-
-        // Ejecutar callback si existe
-        if (options.onOpen) options.onOpen();
-
-        // Configurar Focus Automático (Si se solicita)
-        if (options.focusId) {
-            const el = document.getElementById(options.focusId);
-            if (el) el.focus();
+    /**
+     * Se ejecuta automáticamente al cerrar el módulo desde el orquestador de tu app
+     */
+    destroy: function () {
+        // 1. Remover todos los event listeners registrados de forma explícita
+        if (this.swipeListeners && this.swipeListeners.length > 0) {
+            this.swipeListeners.forEach(listener => {
+                listener.target.removeEventListener(listener.type, listener.handler, listener.options);
+            });
+            this.swipeListeners = [];
         }
 
-    },
-
-    closeModal: function () {
-        const modal = document.getElementById('bistro-pos-modal');
-        if (modal) modal.classList.add('hidden');
+        // 2. Reiniciar estados
+        this.swipeInitialized = false;
+        this.cart = [];
+        this.menu = [];
+        this.modifiers = [];
+        this.activeDraftItem = null;
     },
 
     // ==========================================
-    // Gestión de Productos
+    // LLAMADAS GET
     // ==========================================
     fetchMenu: async function () {
         try {
@@ -98,9 +148,16 @@ window.BistroPosApp = {
         }
     },
 
-    // ==========================================
-    // Gestión de Categorías
-    // ==========================================
+    fetchModifiers: async function () {
+        try {
+            const res = await fetch(`/api/v1/bistro-pos/get-modifiers`);
+            const data = await res.json();
+            this.modifiers = data.groups;
+        } catch (err) {
+            console.error("[POS] Error al obtener modificadores:", err);
+        }
+    },
+
     fetchCategories: async function () {
         try {
             const res = await fetch('/api/v1/bistro-pos/get-categories');
@@ -112,6 +169,23 @@ window.BistroPosApp = {
         }
     },
 
+    fetchTables: async function () {
+        try {
+            const res = await fetch(`/api/v1/bistro-pos/get-tables?hash=${this.tablesHash || ''}`);
+            const data = await res.json();
+            if (data.success && data.changed) {
+                this.tablesHash = data.hash;
+                this.tables = data.tables;
+                this.renderTablesMap();
+            }
+        } catch (err) {
+            console.error("[POS] Error al obtener mesas:", err);
+        }
+    },
+
+    // ==========================================
+    // Gestión de Categorías
+    // ==========================================
     renderCategories: function () {
         const container = document.getElementById('bistro-pos-categories');
 
@@ -132,30 +206,14 @@ window.BistroPosApp = {
             button.className = 'bg-slate-800 text-slate-200 px-2 py-1 rounded-xl whitespace-nowrap border border-slate-700';
         });
 
-        this.currentCategory = this.categories.find(category => category.id === id);
-        const button = document.getElementById(`bistro-pos-category-${id}`);
-        button.className = 'bg-indigo-600 text-white px-2 py-1 rounded-xl font-bold whitespace-nowrap shadow';
+        if (id) {
+            this.currentCategory = this.categories.find(category => category.id === id);
+            const button = document.getElementById(`bistro-pos-category-${id}`);
+            button.className = 'bg-indigo-600 text-white px-2 py-1 rounded-xl font-bold whitespace-nowrap shadow';
+        } else {
+            this.currentCategory = null;
+        }
         this.renderMenu();
-    },
-
-    renderMenu: function () {
-        const container = document.getElementById('bistro-pos-menu');
-        const menuFiltered = this.menu.filter(product => product.category_id === this.currentCategory.id);
-        console.log(menuFiltered);
-
-        container.innerHTML = '';
-        menuFiltered.forEach(product => {
-            const button = document.createElement('button');
-            button.id = `bistro-pos-product-${product.id}`;
-            button.className = 'bg-slate-800 border border-slate-700/80 rounded-xl p-3 flex flex-col justify-between active:scale-95 transition cursor-pointer hover:border-emerald-500';
-            button.innerHTML = `
-                <h2 class="font-bold text-lg text-slate-100">${product.name}</h2>
-                <p class="font-black text-emerald-400 text-base">$ ${product.price}</p>
-                <p class="text-xs text-slate-400">Tocar para agregar predeterminado</p>
-            `;
-            button.onclick = () => this.addProduct(product.id);
-            container.appendChild(button);
-        });
     },
 
     // ==========================================
@@ -175,22 +233,7 @@ window.BistroPosApp = {
 
         // 3. Ejecutar la acción si se estaba abriendo
         if (isOpening) {
-            console.log("[POS] Abriendo cajón de mesas...");
             this.fetchTables();
-        }
-    },
-
-    fetchTables: async function () {
-        try {
-            const res = await fetch(`/api/v1/bistro-pos/get-tables?hash=${this.tablesHash || ''}`);
-            const data = await res.json();
-            if (data.success && data.changed) {
-                this.tablesHash = data.hash;
-                this.tables = data.tables;
-                this.renderTablesMap();
-            }
-        } catch (err) {
-            console.error("[POS] Error al obtener mesas:", err);
         }
     },
 
@@ -237,22 +280,45 @@ window.BistroPosApp = {
     },
 
     selectTable: function (id) {
-        if (this.currentTable === id) return;
-        if (this.cartItems.length > 0) {
-            if (!confirm('¿Seguro que quieres cambiar de mesa? Se borrará la comanda actual.')) return;
+        // Limpiar la selección de mesa
+        if (id === null) {
+            this.currentTable = null;
+            this.personCount = 0;
+            const labelEl = document.getElementById('bistro-pos-table');
+            if (labelEl) labelEl.innerText = "Seleccionar Mesa";
+            const peopleEl = document.getElementById('bistro-pos-people');
+            if (peopleEl) peopleEl.innerHTML = '';
+            this.selectCategory(null);
+            this.cleanCart();
+            return;
         }
-        this.currentTable = id;
-        this.cartItems = [];
-        this.renderCart();
 
-        const labelEl = document.getElementById('bistro-pos-table');
-        const table = this.tables.find(table => table.id === id);
-        console.log(table);
-        if (labelEl) labelEl.innerText = table.name;
+        if (this.currentTable === id) return;
 
-        this.toggleTablesDrawer();
-        this.renderCart();
-        this.renderPeople();
+        const renderTable = () => {
+            this.currentTable = id;
+            this.toggleTablesDrawer();
+            this.renderPeople();
+            this.cleanCart();
+
+            const labelEl = document.getElementById('bistro-pos-table');
+            const table = this.tables.find(table => table.id === id);
+            if (labelEl) labelEl.innerText = table.name;
+        }
+
+        if (this.cart.length > 0) {
+            IxeaComponents.showConfirm({
+                text: '¿Seguro que quieres cambiar de mesa? Se borrará la comanda actual.',
+                icon: 'warning',
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar',
+                onConfirm: () => {
+                    renderTable();
+                }
+            });
+            return;
+        }
+        renderTable();
     },
 
     // ==========================================
@@ -262,6 +328,10 @@ window.BistroPosApp = {
         const peopleEl = document.getElementById('bistro-pos-people');
         if (!peopleEl) return;
         peopleEl.innerHTML = '';
+
+        const table = this.tables.find(table => table.id === this.currentTable);
+        const count = table ? table.count : 0;
+        this.personCount = count;
 
         // Agregar comensal centro
         const btnCenter = document.createElement('button');
@@ -307,7 +377,10 @@ window.BistroPosApp = {
 
     addPerson: function () {
         if (!this.currentTable) {
-            alert("Por favor seleccione una mesa.");
+            IxeaComponents.showAlert({
+                text: 'Por favor seleccione una mesa.',
+                icon: 'warning'
+            });
             return;
         }
 
@@ -328,34 +401,330 @@ window.BistroPosApp = {
     },
 
     // ==========================================
-    // CARRITO Y MODIFICADORES
+    // Gestión de Productos
     // ==========================================
-    addProduct: function (id) {
-        if (!this.currentTable) {
-            alert("Por favor seleccione una mesa.");
-            return;
-        }
+    /**
+     * Renderiza el menú según la selección de categoría
+     */
+    renderMenu: function () {
+        const container = document.getElementById('bistro-pos-menu');
+        container.innerHTML = '';
+        if (!this.currentCategory) return;
 
-        const rawItem = this.menu.find(item => item.id === id);
-        if (!rawItem) return;
+        const menuFiltered = this.menu.filter(product => product.category_id === this.currentCategory.id);
+        menuFiltered.forEach(product => {
+            const button = document.createElement('button');
+            button.id = `bistro-pos-product-${product.id}`;
+            button.className = 'bg-slate-800 border border-slate-700/80 rounded-xl p-3 flex flex-col justify-between active:scale-95 transition cursor-pointer hover:border-emerald-500';
+            button.innerHTML = `
+                <h2 class="font-bold text-lg text-slate-100">${product.name}</h2>
+                <p class="font-black text-emerald-400 text-base">$ ${product.price}</p>
+                <p class="text-xs text-slate-400">Tocar para agregar predeterminado</p>
+            `;
+            button.onclick = () => this.selectProduct(product.id);
+            container.appendChild(button);
+        });
+    },
 
-        const newItem = {
-            id: Date.now(),
-            name: rawItem.name,
-            price: rawItem.price,
-            qty: 1,
-            target_person: this.currentPerson,
-            modifiers: [],
-            notes: ""
-        };
-
-        this.cartItems.push(newItem);
+    /**
+     * Limpia el carrito
+     */
+    cleanCart: function () {
+        this.cart = [];
         this.renderCart();
     },
 
-    openItemModifiers: function (index) {
-        this.editingIndex = index;
-        this.openModal('modal-modifiers');
+    /**
+     * Elimina un producto del carrito directamente
+     */
+    removeItem: function (index) {
+        if (index < 0 || index >= this.cart.length) return;
+        this.cart.splice(index, 1);
+        this.renderCart();
+    },
+
+    /**
+     * Punto de entrada al hacer clic en un producto del menú
+     */
+    selectProduct: function (id) {
+        if (!this.currentTable) {
+            IxeaComponents.showAlert({
+                text: 'Por favor seleccione una mesa.',
+                icon: 'warning'
+            });
+            return;
+        }
+
+        const product = this.menu.find(p => p.id === id);
+        if (!product) return;
+
+        // Obtenemos todos los objetos de grupos pertenecientes a este producto
+        const groups = (product.groups || [])
+            .map(groupId => this.modifiers.find(g => g.id === groupId))
+            .filter(Boolean);
+
+        // Verificamos si requiere modal: Si tiene grupos o si alguno es obligatorio
+        const hasModifiers = groups.length > 0;
+        const hasRequired = groups.some(g => g.required);
+
+        // Creamos el borrador del item
+        this.activeDraftItem = {
+            created_at: Date.now(),
+            product_id: product.id,
+            name: product.name,
+            price: product.price,
+            qty: 1,
+            target: this.currentPerson,
+            modifiers: [], // Guardará los objetos de modificadores seleccionados
+            notes: ""
+        };
+
+        if (hasModifiers && hasRequired) {
+            // Lanza el modal para configurar
+            this.openModifiers(groups);
+        } else {
+            // Si no, lo agrega directo al carrito
+            this.commitDraftToCart();
+        }
+    },
+
+    /**
+     * Modificar item seleccionado en el carrito
+     */
+    modifyItem: function (index) {
+        const item = this.cart[index];
+        if (!item) return;
+
+        // Buscar la información original del producto desde el menú
+        const product = this.menu.find(p => p.id === item.product_id);
+        if (!product) return;
+
+        // Extraer los grupos de modificadores del producto (product.modifier_groups o product.groups según tu API)
+        const groupIds = product.modifier_groups || product.groups || [];
+        const groups = groupIds
+            .map(groupId => this.modifiers.find(g => g.id === groupId))
+            .filter(Boolean);
+
+        // Cargar en el borrador los datos existentes del item en el carrito
+        this.activeDraftItem = {
+            index: index, // Indicamos que estamos editando un item existente
+            created_at: item.created_at,
+            product_id: item.product_id,
+            name: item.name,
+            price: item.price,
+            qty: item.qty,
+            target: item.target,
+            modifiers: [...item.modifiers], // Mantenemos la copia de los modificadores elegidos
+            notes: item.notes || ""
+        };
+
+        // Abre el modal con los grupos
+        this.openModifiers(groups);
+
+        // 1. Cargar las notas previas en el campo de texto
+        const notesInput = document.getElementById('bistro-pos-modifier-notes');
+        if (notesInput) {
+            notesInput.value = item.notes || "";
+        }
+
+        // 2. Marcar visualmente los botones de modificadores ya seleccionados
+        const buttons = document.getElementById('bistro-pos-modifier-content')?.querySelectorAll('button') || [];
+
+        buttons.forEach(btn => {
+            const modId = parseInt(btn.dataset.modId);
+
+            // Verificar si este modificador ya está en la lista guardada del item
+            const isActive = this.activeDraftItem.modifiers.some(m => m.id === modId);
+
+            if (isActive) {
+                btn.className = this.getBtnStyle(true);
+            }
+        });
+    },
+
+    /**
+     * Abre y renderiza el modal dinámico
+     */
+    openModifiers: function (groups) {
+        IxeaComponents.openModal('modifiers', {
+            maxw: '2xl',
+            maxh: '[80vh]',
+            scroll: 'hidden', // Importante: el scroll lo maneja el div interno
+            flex: 'col',
+            onOpen: () => {
+                // Título
+                const titleEl = document.getElementById('bistro-pos-modifier-title');
+                if (titleEl && this.activeDraftItem) {
+                    titleEl.innerText = this.activeDraftItem.name;
+                }
+
+                const container = document.getElementById('bistro-pos-modifier-content');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (!groups || groups.length === 0) {
+                    container.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Este producto no tiene modificadores.</p>';
+                    return;
+                }
+
+                // 1. Priorizar la posición: Ordenar grupos dejando los Obligatorios (required = true) primero
+                const sortedGroups = [...groups].sort((a, b) => (b.required ? 1 : 0) - (a.required ? 1 : 0));
+
+                // 2. Renderizar cada grupo de modificadores
+                sortedGroups.forEach(group => {
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'space-y-2';
+
+                    // Subtítulo con indicadores
+                    const reqBadge = group.required
+                        ? `<span class="text-rose-400 text-[10px] ml-2 font-bold uppercase">(Obligatorio)</span>`
+                        : `<span class="text-slate-500 text-[10px] ml-2 font-normal">(Opcional)</span>`;
+
+                    const maxText = group.max ? ` - Máx ${group.max}` : '';
+
+                    // Cambiado a grid-cols-3 para aprovechar 3 columnas horizontales
+                    groupEl.innerHTML = `
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                            ${group.name} ${reqBadge} <span class="text-slate-500 text-xs text-normal">${maxText}</span>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2" id="group-options-${group.id}"></div>
+                    `;
+
+                    container.appendChild(groupEl);
+
+                    const optionsContainer = groupEl.querySelector(`#group-options-${group.id}`);
+
+                    // Renderizar botones de opciones
+                    group.modifiers.forEach(mod => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.dataset.groupId = group.id;
+                        btn.dataset.modId = mod.id;
+                        btn.className = this.getBtnStyle(false);
+
+                        const priceText = mod.price > 0 ? `<span class="text-emerald-400 ml-1">+$${parseFloat(mod.price).toFixed(2)}</span>` : '';
+                        btn.innerHTML = `<span class="truncate">${mod.name}</span>${priceText}`;
+
+                        // Evento de selección
+                        btn.onclick = () => this.toggleModifierSelection(group, mod, btn);
+
+                        optionsContainer.appendChild(btn);
+                    });
+                });
+            }
+        });
+    },
+
+    /**
+     * Maneja la lógica de selección/deselección de modificadores respetando los límites (max)
+     */
+    toggleModifierSelection: function (group, mod, btn) {
+        const selected = this.activeDraftItem.modifiers;
+        const index = selected.findIndex(m => m.id === mod.id);
+
+        if (index > -1) {
+            // Deseleccionar si ya estaba
+            selected.splice(index, 1);
+            btn.className = this.getBtnStyle(false);
+        } else {
+            // Contar cuántos modificadores de este mismo grupo ya están seleccionados
+            const countInGroup = selected.filter(m => m.group_id === group.id).length;
+
+            if (group.max === 1) {
+                // Caso Selección Única (Radio): Quitar el seleccionado anterior del mismo grupo
+                this.activeDraftItem.modifiers = selected.filter(m => m.group_id !== group.id);
+
+                // Actualizar estilos UI de los botones del grupo
+                const siblingBtns = btn.parentElement.querySelectorAll('button');
+                siblingBtns.forEach(b => b.className = this.getBtnStyle(false));
+
+                // Agregar el nuevo
+                this.activeDraftItem.modifiers.push({ ...mod, group_id: group.id });
+                btn.className = this.getBtnStyle(true);
+
+            } else if (!group.max || countInGroup < group.max) {
+                // Caso Múltiple: Agregar si no ha superado el máximo permitido
+                this.activeDraftItem.modifiers.push({ ...mod, group_id: group.id });
+                btn.className = this.getBtnStyle(true);
+            } else {
+                IxeaComponents.showAlert({
+                    text: `Solo puedes seleccionar hasta ${group.max} opciones en ${group.name}.`,
+                    icon: 'info'
+                });
+            }
+        }
+    },
+
+    /**
+     * Estilos visuales dinámicos para los botones de modificadores
+     */
+    getBtnStyle: function (isSelected) {
+        const base = "py-2.5 px-3 font-bold text-xs rounded-xl border text-left flex justify-between items-center transition-all duration-150 ";
+        if (isSelected) {
+            return base + "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-900/40";
+        }
+        return base + "bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500";
+    },
+
+    /**
+     * Valida reglas obligatorias y guarda el borrador en el carrito
+     */
+    saveModifiers: function () {
+        if (!this.activeDraftItem) return;
+
+        // Buscar la información original del producto desde el menú
+        const product = this.menu.find(p => p.id === this.activeDraftItem.product_id);
+        if (!product) return;
+
+        // Extraer los grupos de modificadores del producto
+        const groups = (product.groups || [])
+            .map(groupId => this.modifiers.find(g => g.id === groupId))
+            .filter(Boolean);
+
+        // 1. Validar grupos requeridos
+        for (const group of groups) {
+            if (group.required) {
+                const selectedInGroup = this.activeDraftItem.modifiers.filter(m => m.group_id === group.id);
+                if (selectedInGroup.length === 0) {
+                    IxeaComponents.showAlert({
+                        text: `Por favor seleccione una opción para: ${group.name}`,
+                        icon: 'warning'
+                    });
+                    return;
+                }
+            }
+        }
+
+        // 2. Extraer notas ingresadas
+        const notesInput = document.getElementById('bistro-pos-modifier-notes');
+        if (notesInput) {
+            this.activeDraftItem.notes = notesInput.value.trim();
+        }
+
+        // 3. Confirmar adición
+        this.commitDraftToCart();
+        IxeaComponents.closeModal();
+    },
+
+    /**
+     * Inserta el producto procesado al carrito de compras
+     */
+    commitDraftToCart: function () {
+        if (!this.activeDraftItem) return;
+
+        const { index, ...finalItem } = this.activeDraftItem;
+
+        if (typeof index === 'number' && index >= 0) {
+            // Reemplazar el producto existente en esa posición
+            this.cart[index] = finalItem;
+        } else {
+            // Agregar uno nuevo
+            this.cart.push(finalItem);
+        }
+
+        this.activeDraftItem = null;
+        this.renderCart();
     },
 
     renderCart: function () {
@@ -363,7 +732,7 @@ window.BistroPosApp = {
         const totalEl = document.getElementById('bistro-pos-amount');
         if (!cartEl) return;
 
-        if (this.cartItems.length === 0) {
+        if (this.cart.length === 0) {
             cartEl.innerHTML = `
                 <div class="h-full flex flex-col items-center justify-center text-slate-500 py-10">
                     <span class="text-4xl mb-2">🍽️</span>
@@ -374,61 +743,139 @@ window.BistroPosApp = {
         }
 
         let total = 0;
-        cartEl.innerHTML = this.cartItems.map((item, index) => {
-            total += item.price * item.qty;
+
+        cartEl.innerHTML = this.cart.map((item, index) => {
+            // 1. Sumar el precio base + la suma de los precios de los modificadores elegidos
+            const modifiersPrice = (item.modifiers || []).reduce((acc, mod) => acc + (parseFloat(mod.price) || 0), 0);
+            const itemUnitPrice = (parseFloat(item.price) || 0) + modifiersPrice;
+            const itemSubtotal = itemUnitPrice * item.qty;
+
+            total += itemSubtotal;
+
+            // 2. Formatear la lista de modificadores en texto pequeño
+            const modifiersText = (item.modifiers || []).length > 0
+                ? `<div class="text-[11px] text-slate-400 mt-1 pl-2 border-l-2 border-indigo-500/50 space-y-0.5">
+                    ${item.modifiers.map(m => `<div>• ${m.name} ${m.price > 0 ? `<span class="text-emerald-400/80">(+$ ${toCurrency(m.price)})</span>` : ''}</div>`).join('')}
+                </div>`
+                : '';
+
             return `
-            <div onclick="BistroPosApp.modifyItem(${index})" 
-                 class="bg-slate-900/90 border border-slate-700 p-3 rounded-xl cursor-pointer hover:border-indigo-500 transition">
-                <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-sm text-slate-200">${item.qty}x ${item.name}</h4>
-                    <span class="font-bold text-emerald-400 text-sm">$${(item.price * item.qty).toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between items-center mt-1.5">
-                    ${item.notes ? `<p class="text-xs text-slate-400">${item.notes}</p>` : ''}
-                    <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-md font-semibold">
-                        ${item.target_person === 0 ? '🍽️ Centro' : '👤 P' + item.target_person}
-                    </span>
+            <div class="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-900/90 mb-2 group">
+                <!-- Botón de eliminación revelado al deslizar -->
+                <button onclick="BistroPosApp.removeItem(${index})" 
+                        class="absolute right-0 top-0 bottom-0 w-16 bg-rose-600 hover:bg-rose-500 text-white flex flex-col items-center justify-center transition-all duration-200 z-10 shadow-inner">
+                    <span class="text-lg">🗑️</span>
+                    <span class="text-[10px] font-bold">Quitar</span>
+                </button>
+
+                <!-- Contenido deslizable -->
+                <div id="cart-item-${index}"
+                    data-index="${index}"
+                    onclick="BistroPosApp.modifyItem(${index})" 
+                    class="swipe-item relative bg-slate-900 p-3 cursor-pointer transition-transform duration-200 ease-out z-20 hover:border-indigo-500">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-sm text-slate-200">${item.qty}x ${item.name}</h4>
+                        <span class="font-bold text-emerald-400 text-sm">${toCurrency(itemSubtotal)}</span>
+                    </div>
+
+                    ${modifiersText}
+
+                    <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-800/80">
+                        ${item.notes ? `<p class="text-xs text-amber-400/90 italic">📝 ${item.notes}</p>` : '<div></div>'}
+                        <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-md font-semibold">
+                            ${item.target === 0 || !item.target ? '🍽️ Centro' : '👤 P' + item.target}
+                        </span>
+                    </div>
                 </div>
             </div>`;
         }).join('');
 
         cartEl.scrollTop = cartEl.scrollHeight;
-
         if (totalEl) totalEl.innerText = `$${toCurrency(total)}`;
     },
 
-    modifyItem: function (index) {
-        const item = this.cartItems[index];
-        this.editingIndex = index;
-
-
-        this.openModal('modifiers');
-    },
-
     sendToKitchen: async function () {
-        if (this.cartItems.length === 0) {
-            alert("No hay productos para enviar a cocina.");
+        if (this.cart.length === 0) {
+            IxeaComponents.showAlert({
+                text: 'No hay productos para enviar a cocina.',
+                icon: 'warning'
+            });
             return;
         }
 
+        if (this.cart.length > 0) {
+            IxeaComponents.showConfirm({
+                title: '¿Enviar orden a cocina?',
+                icon: 'question',
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar',
+                onConfirm: () => this.processOrder()
+            });
+            return;
+        }
+    },
+
+    processOrder: async function () {
+        // 1. Mostrar pantalla de carga
+        IxeaComponents.showLoading({ text: 'Enviando comanda a cocina...' });
+
         try {
-            const res = await fetch('/api/v1/bistro-pos/send-to-kitchen', {
+            // 2. Estructurar el payload que va al servidor
+            const orderPayload = {
+                table_id: this.currentTable ? this.currentTable.id : null,
+                waiter_id: this.currentUser ? (this.currentUser.id || this.currentUser) : null,
+                items: this.cart.map(item => ({
+                    product_id: item.product_id,
+                    qty: item.qty,
+                    price: parseFloat(item.price),
+                    target: item.target || 0, // 0 = Centro, 1+ = Comensal
+                    notes: item.notes || '',
+                    modifiers: (item.modifiers || []).map(mod => ({
+                        id: mod.id,
+                        group_id: mod.group_id,
+                        price: parseFloat(mod.price)
+                    }))
+                }))
+            };
+
+            // 3. Petición al backend
+            const response = await fetch('/api/v1/bistro-pos/process-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
-                body: JSON.stringify({
-                    table: this.currentTable,
-                    items: this.cartItems
-                })
+                body: JSON.stringify(orderPayload)
             });
-            const data = await res.json();
-            if (data.success) {
-                alert(`✅ Comanda enviada a cocina para ${this.currentTable}`);
+
+            const result = await response.json();
+
+            // 4. Cerrar la pantalla de carga antes de mostrar la alerta final
+            IxeaComponents.hideLoading();
+
+            if (response.ok && result.success) {
+                IxeaComponents.showAlert({
+                    title: '¡Comanda Enviada!',
+                    text: result.message || 'Orden enviada a cocina con éxito.',
+                    icon: 'success',
+                    timer: 2500
+                });
+
+                // Limpiar mesa seleccionada y carrito
+                this.selectTable(null);
+            } else {
+                throw new Error(result.message || 'No se pudo procesar la orden en cocina.');
             }
-        } catch (err) {
-            console.error("[POS] Error al enviar a cocina:", err);
+
+        } catch (error) {
+            IxeaComponents.hideLoading();
+            console.error('[POS processOrder Error]:', error);
+
+            IxeaComponents.showAlert({
+                title: 'Error de Envío',
+                text: error.message || 'Ocurrió un fallo de conexión al enviar la comanda.',
+                icon: 'error'
+            });
         }
     },
 
@@ -436,13 +883,12 @@ window.BistroPosApp = {
     // CUENTAS Y FACTURACIÓN
     // ==========================================
     openSplitOptions: function () {
-        this.closeModal('modal-bill-confirm');
-        this.openModal('modal-split-options');
+        IxeaComponents.closeModal();
+        IxeaComponents.openModal('modal-split-options');
     },
 
     processBill: async function (type) {
-        this.closeModal('modal-bill-confirm');
-        this.closeModal('modal-split-options');
+        IxeaComponents.closeModal();
 
         try {
             const res = await fetch('/api/v1/bistro-pos/request-bill', {

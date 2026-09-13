@@ -14,6 +14,8 @@ $getAssetVersion = function($relativePath) use ($publicPath) {
 ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Meta CSRF Token para peticiones AJAX de la API -->
+<meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? ($_SESSION['csrf_token'] = bin2hex(random_bytes(32))); ?>">
 
 <!-- Favicon dinámico generado desde el isotipo SVG -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<?php 

@@ -10,6 +10,7 @@
     "autoload": {
         "psr-4": {
             "App\\Classes\\": "classes/",
+            "App\\Enums\\": "classes/enums/",
             "App\\Core\\": "core/",
             "App\\Database\\": "db/",
             "App\\Models\\": "db/models/",

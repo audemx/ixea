@@ -1,7 +1,7 @@
 <?php
 /**
  * IXEA EROS - Helper: Schema Graph Table Lookup
- * 
+ * Obtiene la estructura de tablas a partir del archivo schema-graph.json
  * Uso desde Terminal:
  * php schema-table.php tables
  */

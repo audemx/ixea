@@ -4,6 +4,8 @@
 namespace App\Core;
 
 use App\Models\SystemTable;
+use App\Models\SystemLog;
+use Throwable;
 
 abstract class Controller
 {
@@ -65,6 +67,36 @@ abstract class Controller
         }
 
         return (string)$table->updated_at;
+    }
+
+    /**
+     * Registra un evento en la tabla sys_logs
+     */
+    protected function systemLog(
+        int $userId,
+        int $actionId,
+        ?int $statusId,
+        ?int $tableId,
+        ?int $recordId,
+        ?string $details = null
+    ): void {
+        try {
+            // (user_id, action_id, status_id, table_id, record_id, details)
+            SystemLog::create([
+                'user_id'    => $userId ?? $_SESSION['user_id'],
+                'action_id'  => $actionId,
+                'status_id'  => $statusId ?? 14,
+                'table_id'   => $tableId ?? null,
+                'record_id'  => $recordId ?? null,
+                'details'    => $details ?? null,
+                'method'     => $_SERVER['REQUEST_METHOD'] ?? null,
+                'ip'         => $_SERVER['REMOTE_ADDR'] ?? null,
+                'agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null
+            ]);
+        } catch (Throwable $e) {
+            // Evitamos bloquear el flujo principal si el logging falla
+            error_log('[SysLog Failure]: ' . $e->getMessage());
+        }
     }
     
 }

@@ -4,6 +4,130 @@
  */
 
 /**
+ * IxeaComponets: Componentes reutilizables.
+ */
+const IxeaComponents = {
+    // Alertas personalizadas con SweetAlert
+    showAlert: function ({ title = '¡Atención!', text = '', icon = 'warning', timer = null }) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            background: '#1e293b',
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                title: 'text-white font-bold',
+                htmlContainer: 'text-slate-300',
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition'
+            },
+            buttonsStyling: false,
+            timer: timer,
+            timerProgressBar: Boolean(timer),
+            showConfirmButton: !timer
+        });
+    },
+
+    showConfirm: function ({ title = 'Confirmar', text = '', icon = 'warning', confirmButtonText = 'Confirmar', cancelButtonText = 'Cancelar', onConfirm }) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            background: '#1e293b', // bg-slate-800
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            showCancelButton: true,
+            reverseButtons: true, // Muestra primero el botón de cancelar
+            confirmButtonColor: '#3b82f6', // blue-500
+            cancelButtonColor: '#64748b', // slate-500
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                title: 'text-white font-bold',
+                htmlContainer: 'text-slate-300',
+                cancelButton: 'bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition',
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed && onConfirm) {
+                onConfirm();
+            }
+        });
+    },
+
+    showLoading: function ({ text = 'Procesando...' }) {
+        Swal.fire({
+            text: text,
+            background: '#1e293b',
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                htmlContainer: 'text-slate-300 font-medium'
+            },
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    },
+
+    hideLoading: function () {
+        Swal.close();
+    },
+
+    openModal: function (operation, options = {}) {
+        const stage = IxeaStages.activeStage.replace("stage-", "");
+        const modal = document.getElementById(`${stage}-modal`);
+        const template = document.getElementById(`${stage}-template-${operation}`);
+        if (!modal || !template) return;
+
+        modal.innerHTML = '';
+
+        let modalClassList = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3'
+        let contentClassList = 'bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-2xl';
+
+        // Definir clases del modal
+        options.backdrop ? modalClassList += ` backdrop-blur-${options.backdrop}` : modalClassList += ' backdrop-blur-sm';
+        modal.className = modalClassList;
+
+        // Definir clases del contenido
+        options.width ? contentClassList += ` w-${options.width}` : contentClassList += ' w-full';
+        options.height ? contentClassList += ` h-${options.height}` : contentClassList += '';
+        options.maxw ? contentClassList += ` max-w-${options.maxw}` : contentClassList += '';
+        options.maxh ? contentClassList += ` max-h-${options.maxh}` : contentClassList += '';
+        options.xalign ? contentClassList += ` text-${options.xalign}` : contentClassList += ' text-center';
+        options.yalign ? contentClassList += ` items-${options.yalign}` : contentClassList += ' items-center';
+        options.scroll ? contentClassList += ` overflow-${options.scroll}` : contentClassList += ' overflow-hidden';
+        options.flex ? contentClassList += ` flex flex-${options.flex}` : contentClassList += '';
+
+        const child = document.createElement('div');
+        child.className = contentClassList;
+
+        const clone = template.content.cloneNode(true);
+        child.appendChild(clone);
+        modal.appendChild(child);
+
+        // Ejecutar callback si existe
+        if (options.onOpen) options.onOpen();
+
+        // Configurar Focus Automático (Si se solicita)
+        if (options.focusId) {
+            const el = document.getElementById(options.focusId);
+            if (el) el.focus();
+        }
+    },
+
+    closeModal: function () {
+        const stage = IxeaStages.activeStage.replace("stage-", "");
+        const modal = document.getElementById(`${stage}-modal`);
+        if (modal) modal.classList.add('hidden');
+    }
+};
+
+/**
  * IxeaDocks: Contenedores laterales de aplicaciones y widgets.
  */
 const IxeaDocks = {
@@ -336,74 +460,6 @@ const IxeaStages = {
     }
 };
 
-/**
- * IxeaWidgets: Widgets
- */
-const IxeaWidgets = {
-    activeWidget: null,
-    currentPos: 0,
-
-    toggle: function (id) {
-        const panel = document.getElementById('widget-panel');
-        if (this.activeWidget === id) return this.close();
-
-        this.loadWidget(id);
-        panel.classList.add('active');
-        this.updatePosition();
-        this.activeWidget = id;
-    },
-
-    nextPos: function () {
-        this.currentPos = (this.currentPos + 1) % 6;
-        this.updatePosition();
-    },
-
-    updatePosition: function () {
-        const panel = document.getElementById('widget-panel');
-        // Limpiamos clases de posición
-        for (let i = 0; i < 6; i++) panel.classList.remove(`pos-${i}`);
-        panel.classList.add(`pos-${this.currentPos}`);
-    },
-
-    loadWidget: function (id) {
-        const loader = document.getElementById('widget-loader');
-
-        // Si el usuario clickeó super rápido y el panel aún no está en el DOM
-        if (!loader) return;
-
-        loader.innerHTML = `<div class="text-center mt-5"><div class="spinner-border spinner-border-sm text-secondary"></div></div>`;
-
-        // Solo usamos el FETCH actual
-        fetch(`/includes/widgets/${id}.php`)
-            .then(response => {
-                if (!response.ok) throw new Error('No se encontró el widget');
-                return response.text();
-            })
-            .then(html => {
-                loader.innerHTML = html;
-
-                if (id === 'calc' && typeof calc !== 'undefined') {
-                    setTimeout(() => calc.clear(), 10);
-                }
-
-                if (id === 'calendar' && typeof CalendarApp !== 'undefined') {
-                    setTimeout(() => CalendarApp.init(), 10);
-                }
-
-                if (id === 'notes' && typeof NotesApp !== 'undefined') {
-                    setTimeout(() => NotesApp.load(), 10);
-                }
-            })
-            .catch(err => {
-                loader.innerHTML = `<div class="p-3 small text-danger">Error: ${err.message}</div>`;
-            });
-    },
-
-    close: function () {
-        document.getElementById('widget-panel').classList.remove('active');
-        this.activeWidget = null;
-    }
-};
 
 /**
  * Iniciadores Globales

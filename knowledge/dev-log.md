@@ -110,5 +110,13 @@
 * Se planteo utitilizar polling cada 5 segundos, lo cual representa una latencia de 5 segundos en el peor de los casos, junto con una infraestructura de Edge Compute donde un único nodo dentro del negocio se encargaría de actualizar los cambios a los demás dispositivos.
 * Se integrará nuevamente PHP para manejo de base de datos y lógica de negocio.
 
-### [2026-09-06 18:01] `feat(ui)`: Prototipo de diseño para Bistro POS y Bistro KDS.
+### [2026-09-09 12:00] `feat(arch)`: Diseño de arquitectura para Bistro POS y Bistro KDS.
+* Introducción de Bistro POS y Bistro KDS en Launchpad
+* Generación de frontend (php, js) y backend (controller) para BistroPos
+* Extracción de schema para Bistro con independencia de EROS
 
+### [2026-09-12 20:00] `feat(db)`: Generación de clases Enum.
+* Generación de clases Enum a partir de tablas de sistema.
+* Se modificó la tabla sys_tables para incluir el campo is_enum y column_name.
+* Se incorporó al flujo de generación de modelos el script generate-enums.php.
+* Actualización de composer.json para incluir el namespace App\Enums\ y actualizar el mapa de autocarga de clases PSR-4.

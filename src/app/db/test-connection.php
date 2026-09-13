@@ -1,4 +1,5 @@
 <?php
+// Corre desde contenedor.
 // Ejecuta test de conexion y muestra el esquema de la base de datos.
 require_once __DIR__ . '/../vendor/autoload.php';
 
