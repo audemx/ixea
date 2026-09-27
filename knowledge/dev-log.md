@@ -120,3 +120,22 @@
 * Se modificó la tabla sys_tables para incluir el campo is_enum y column_name.
 * Se incorporó al flujo de generación de modelos el script generate-enums.php.
 * Actualización de composer.json para incluir el namespace App\Enums\ y actualizar el mapa de autocarga de clases PSR-4.
+* Ejecución del script generate-enums.php para generar las clases Enum: `docker exec -it dev-web-1 php ../app/db/generate-enums.php`.
+* Para iniciar de cero usamos:
+  * `orb start` para contenerizador.
+  * `ixea-up` para iniciar contenedores.
+  * `php src/build.php bistro` para generar modelos, schema JSON y datos iniciales del sistema (sys-data.sql) con squema bistro.
+  * `docker exec -it dev-web-1 php ../app/db/test-connection.php` para verificar la conexión a la base de datos.
+  * `docker exec -it dev-web-1 php ../app/db/generate-enums.php` para generar clases Enum.
+  * `docker exec -it dev-web-1 composer dump-autoload --working-dir=/var/www/app` para actualizar el mapa de autocarga de clases PSR-4.
+  
+### [2026-09-18 16:30] `feat(backend)`: Optimización en la lógica de seguridad y permisos.
+* Se eliminó la carga de permisos en la sesión.
+  * Se modificó `app/access/login.php` para que devuelva user_id y role_id.
+* Se optimizó el manejo de permisos y se colocó dentro del helper Security.
+  * Se incorporaron las funciones `hasPermission()` y `getInheritedRoles()` en la clase Security.
+  * Se incorporó a la función `authorize()` la validación de permisos como una lista que integra cada `permission_id` y el manejo de CSRF.
+  
+### [2026-09-18 18:45] `feat(frontend)`: Optimización en la lógica de seguridad y permisos.
+* IxeaComponents contiene openModal('auth') lanza modal de autentificación.
+* Ajustar parametros de IxeaBouncer: action, permission, para que se revisen permisos específicos.

@@ -3,8 +3,9 @@
 
 namespace App\Core;
 
-use App\Models\SystemTable;
-use App\Models\SystemLog;
+use App\Models\SysTable;
+use App\Models\SysLog;
+use App\Enums\SysAction;
 use Throwable;
 
 abstract class Controller
@@ -44,59 +45,97 @@ abstract class Controller
     }
 
     /**
-     * Obtiene parámetros sanitizados de la URL ($_GET).
+     * Obtiene parámetros sanitizados de $_GET, $_POST o el cuerpo JSON de la petición.
      */
     protected function getParam(string $key, mixed $default = null): mixed
     {
-        return $_GET[$key] ?? $default;
+        // 1. Si viene por GET o POST tradicional (form-data / urlencoded)
+        if (isset($_REQUEST[$key])) {
+            return $_REQUEST[$key];
+        }
+
+        // 2. Si no existe, parseamos el payload JSON del Body (IxeaBridge)
+        static $jsonBody = null;
+
+        if ($jsonBody === null) {
+            $rawInput = file_get_contents('php://input');
+            if (!empty($rawInput)) {
+                $jsonBody = json_decode($rawInput, true);
+            } else {
+                $jsonBody = [];
+            }
+        }
+
+        return $jsonBody[$key] ?? $default;
     }
 
     /**
-     * Obtiene el hash o updated_at de la tabla
+     * Obtiene un hash consolidado de una o varias tablas
+     * @param string|array $tables - Ej: 'tables' o ['tables', 'orders', 'order_items']
      */
-    protected function getTableHash(string $tableName): string
+    protected function getHash(string|array $tables): string
     {
-        if (!class_exists('App\Models\SystemTable')) {
-            return 'No class SystemTable found';
+        if (!class_exists('App\Models\SysTable')) {
+            return 'No class SysTable found';
         }
 
-        $table = SystemTable::where('name', $tableName)->first();
-        
-        if (!$table || !$table->updated_at) {
+        $tableList = is_array($tables) ? $tables : [$tables];
+
+        // Obtenemos los updated_at de todas las tablas indicadas
+        $updatedAts = SysTable::whereIn('name', $tableList)
+            ->pluck('updated_at')
+            ->filter()
+            ->toArray();
+
+        if (empty($updatedAts)) {
             return 'No hash';
         }
 
-        return (string)$table->updated_at;
+        // El hash consolidado se genera a partir de las fechas combinadas
+        sort($updatedAts);
+        return md5(implode('|', $updatedAts));
     }
 
     /**
      * Registra un evento en la tabla sys_logs
      */
-    protected function systemLog(
-        int $userId,
-        int $actionId,
-        ?int $statusId,
-        ?int $tableId,
-        ?int $recordId,
+    protected function sysLog(
+        ?int $userId = null,
+        int $actionId = 1,
+        ?int $statusId = null,
+        ?int $tableId = null,
+        ?int $recordId = null,
         ?string $details = null
     ): void {
         try {
-            // (user_id, action_id, status_id, table_id, record_id, details)
-            SystemLog::create([
-                'user_id'    => $userId ?? $_SESSION['user_id'],
-                'action_id'  => $actionId,
-                'status_id'  => $statusId ?? 14,
-                'table_id'   => $tableId ?? null,
-                'record_id'  => $recordId ?? null,
-                'details'    => $details ?? null,
-                'method'     => $_SERVER['REQUEST_METHOD'] ?? null,
-                'ip'         => $_SERVER['REMOTE_ADDR'] ?? null,
-                'agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null
+            // Si no se envía $userId explícito, intenta tomarlo de la sesión activa
+            $finalUserId = $userId ?? $_SESSION['user_id'] ?? null;
+
+            SysLog::create([
+                'user_id'   => $finalUserId,
+                'action_id' => $actionId,
+                'status_id' => $statusId ?? 14,
+                'table_id'  => $tableId,
+                'record_id' => $recordId,
+                'details'   => $details,
+                'ip'        => $_SERVER['REMOTE_ADDR'] ?? null
             ]);
+
+            // Definimos las acciones que MUTAN / CAMBIAN datos.
+            $mutatingActions = [
+                SysAction::CREATE,
+                SysAction::UPDATE,
+                SysAction::DELETE,
+            ];
+
+            // SOLO actualizamos el timestamp si hubo una modificación real de datos
+            if ($tableId && in_array($actionId, $mutatingActions, true)) {
+                SysTable::where('id', $tableId)->update([
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            }
         } catch (Throwable $e) {
-            // Evitamos bloquear el flujo principal si el logging falla
             error_log('[SysLog Failure]: ' . $e->getMessage());
         }
     }
-    
 }

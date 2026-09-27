@@ -6,6 +6,7 @@
 
 namespace App\Classes;
 
+use App\Core\Security;
 use App\Models\App as AppModel;
 
 class App {
@@ -23,7 +24,6 @@ class App {
         $this->code = $data['code'] ?? '';
         $this->title = $data['title'] ?? '';
         $this->url = '/modules/' . ($data['code'] ?? '');
-        $this->permissionKey = $data['permission_key'] ?? '';
         $this->icon = $data['icon'] ?? '';
         $this->colorHex = $data['color_hex'] ?? '#000000';
         $this->colorName = $data['color_name'] ?? 'default';
@@ -33,7 +33,6 @@ class App {
     public function getCode(): string { return $this->code; }
     public function getTitle(): string { return $this->title; }
     public function getUrl(): string { return $this->url; }
-    public function getPermissionKey(): string { return $this->permissionKey; }
     public function getIcon(): string { return $this->icon; }
     public function getColorHex(): string { return $this->colorHex; }
     public function getColorName(): string { return $this->colorName; }
@@ -41,8 +40,12 @@ class App {
     /**
      * Obtiene las aplicaciones accesibles usando el Modelo Eloquent (igual que en Login)
      */
-    public static function getAccessibleApps(bool $isSuper, array $userPermissions): array {
-        // Carga de la BD usando Eloquent con Eager Loading
+    public static function getAccessibleApps(): array {
+        $user = Security::authorize();
+        $isSuper = $user['isSuper'] ?? false;
+        $userPermissions = $user['userPermissions'] ?? [];
+
+        // Carga de las apps de la DB usando Eloquent
         $records = AppModel::with(['permission', 'color'])
             ->where('status_id', 1)
             ->orderBy('title', 'asc')
@@ -51,14 +54,13 @@ class App {
         $accessibleApps = [];
 
         foreach ($records as $record) {
-            $permissionKey = $record->permission->key ?? '';
+            $permissionId = $record->permission->id ?? '';
 
-            if ($isSuper || in_array($permissionKey, $userPermissions, true)) {
+            if ($isSuper || in_array($permissionId, $userPermissions, true)) {
                 $accessibleApps[] = new self([
                     'id'             => $record->id,
                     'code'           => $record->code,
                     'title'          => $record->title,
-                    'permission_key' => $permissionKey,
                     'icon'           => $record->icon,
                     'color_hex'      => $record->color->hex ?? '#000000',
                     'color_name'     => $record->color->name ?? 'black'

@@ -41,6 +41,7 @@ CREATE TABLE `menu` (
   `station_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona la tabla de estaciones',
   `price` decimal(10,2) NOT NULL COMMENT 'Precio del item',
   `cost` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Costo del item',
+  `prep_time` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Tiempo de preparación en minutos',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estado del registro: 1=active, 3=suspended, 4=discontinued, 5=archived',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -61,7 +62,7 @@ CREATE TABLE `menu_categories` (
   `name` varchar(100) NOT NULL,
   `description` text NULL COMMENT 'Descripción de la categoría',
   `emoji` varchar(10) NULL COMMENT 'Emoji de la categoría',
-  `sort_order` int(10) UNSIGNED NULL COMMENT 'Orden de visualización de la categoría',
+  `sort` int(10) UNSIGNED NULL COMMENT 'Orden de visualización de la categoría',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=Active, 3=Suspended, 5=Archived',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -156,16 +157,17 @@ CREATE TABLE `modifier_grouped` (
 --
 CREATE TABLE `orders` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `daily_order` int(10) UNSIGNED NOT NULL COMMENT 'Número de orden diario',
   `folio` varchar(20) NOT NULL COMMENT 'Código único de la orden',
   `user_id` int(10) UNSIGNED NOT NULL COMMENT 'Usuario que atendió la orden',
+  `channel_id` int(10) UNSIGNED NOT NULL COMMENT 'Canal de venta',
   `table_id` int(10) UNSIGNED NULL COMMENT 'Mesa asignada a la orden',
   `customer_id` int(10) UNSIGNED NULL COMMENT 'Cliente',
-  `type` enum('take_away','delivery','dine_in') NOT NULL DEFAULT 'dine_in' COMMENT 'Tipo de orden',
-  `people_count` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de personas',
-  `items` int(10) NOT NULL COMMENT 'Cantidad de productos vendidos',
+  `people` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de personas',
+  `items` int(10) DEFAULT 0 COMMENT 'Cantidad de productos vendidos',
   `is_taxable` tinyint(1) DEFAULT 0 COMMENT 'Indica si la orden se factura',
   `discount` decimal(12,2) DEFAULT 0.00 COMMENT 'Descuento aplicado a la venta',
-  `amount` decimal(12,2) NOT NULL COMMENT 'Total de la venta',
+  `amount` decimal(12,2) DEFAULT 0.00 COMMENT 'Total de la venta',
   `shift_id` int(10) UNSIGNED NULL COMMENT 'Turno de caja',
   `paid_status` int(10) UNSIGNED NULL COMMENT 'Estado del pago: 6=pending, 7=paid, 9=cancelled, 10=returned',
   `method_id` int(10) UNSIGNED NULL COMMENT 'Método de pago',
@@ -179,11 +181,47 @@ CREATE TABLE `orders` (
   KEY `idx_order_date` (`created_at`),
   KEY `idx_order_finance` (`created_at`,`customer_id`,`method_id`,`amount`),
   KEY `fk_order_user` (`user_id`),
+  KEY `fk_order_channel` (`channel_id`),
+  KEY `fk_order_table` (`table_id`),
   KEY `fk_order_customer` (`customer_id`),
   KEY `fk_order_shift` (`shift_id`),
   KEY `fk_order_method` (`method_id`),
   KEY `fk_order_paid` (`paid_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de órdenes';
+
+-- --------------------------------------------------------
+
+--
+-- 30. Estructura de tabla para `order_external_details`
+-- Registro complementario de ordenes para APIs externas
+--
+CREATE TABLE `order_external_details` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id` int(10) UNSIGNED NOT NULL COMMENT 'Relación 1 a 1 con la orden principal',
+  -- Identificadores y Estados Externos
+  `external_reference` varchar(100) NOT NULL COMMENT 'ID de la orden asignado por la plataforma (ej: UBER-98214)',
+  `external_status` varchar(50) NULL COMMENT 'Estado reportado por la API (ej: DRIVER_ASSIGNED, STORE_ACCEPTED)',
+  `display_id` varchar(20) NULL COMMENT 'Folio corto visible para el repartidor (ej: #A92)',
+  -- Datos Financieros Reales de la Plataforma
+  `user_amount` decimal(12,2) NOT NULL COMMENT 'Lo que pagó el cliente final en la app',
+  `payout_amount` decimal(12,2) NOT NULL COMMENT 'Monto neto REAL que la plataforma pagará',
+  `marketplace_fee` decimal(12,2) DEFAULT 0.00 COMMENT 'Comisión retenida por la app',
+  `delivery_fee` decimal(12,2) DEFAULT 0.00 COMMENT 'Costo de envío cobrado por la app',
+  -- Datos del Cliente y Repartidor (Volátiles / No persistentes en clientes ERP)
+  `customer_name` varchar(150) NULL COMMENT 'Nombre del cliente en la app',
+  `customer_phone` varchar(30) NULL COMMENT 'Teléfono o alias temporal del cliente',
+  `delivery_address` text NULL COMMENT 'Dirección de entrega',
+  `courier_name` varchar(150) NULL COMMENT 'Nombre del repartidor',
+  `courier_phone` varchar(30) NULL COMMENT 'Teléfono del repartidor',
+  -- Trazabilidad de Integración
+  `payload` json NULL COMMENT 'Payload raw en JSON que envió el Webhook de la plataforma (ideal para auditoría)',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ext_order_id` (`order_id`),
+  KEY `idx_ext_ref` (`external_reference`),
+  KEY `idx_ext_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Complemento de órdenes provenientes de plataformas externas';
 
 -- --------------------------------------------------------
 
@@ -201,7 +239,7 @@ CREATE TABLE `order_items` (
   `status_id` int(10) UNSIGNED NOT NULL COMMENT 'Estado del registro: 6=pending, 8=delivered, 9=cancelled, 10=returned',
   `quantity` decimal(10,2) NOT NULL COMMENT 'Cantidad',
   `unitary` decimal(10,2) NOT NULL COMMENT 'Precio unitario',
-  `discount` decimal(10,2) DEFAULT 0.00 COMMENT 'Descuento aplicado',
+  `discount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Descuento aplicado',
   `amount` decimal(10,2) NOT NULL COMMENT 'Total',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `delivery_at` timestamp NULL COMMENT 'Fecha de entrega',
@@ -283,6 +321,9 @@ CREATE TABLE `stations` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre de la estación',
   `description` text NULL COMMENT 'Descripción de la estación',
+  `emoji` varchar(10) NULL COMMENT 'Emoji de la estación',
+  `type` enum('kds') NULL COMMENT 'Tipo de estación: kds',
+  `sort` int(10) UNSIGNED NULL COMMENT 'Orden de visualización de la estación',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=Active, 3=Suspended, 5=Archived',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -305,7 +346,6 @@ CREATE TABLE `tables` (
   `pos_y` int(10) UNSIGNED NOT NULL COMMENT 'Posición en el eje Y',
   `size` enum('S', 'M', 'L') NOT NULL COMMENT 'Tamaño de la mesa',
   `orientation` enum('H', 'V') NOT NULL COMMENT 'Orientación de la mesa',
-  `count` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Número de personas en la mesa',
   `use_status_id` int(10) UNSIGNED NOT NULL DEFAULT 12 COMMENT 'Estado de uso: 6=pending, 11=open, 12=closed',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=active, 3=suspended, 5=archived',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -357,10 +397,16 @@ ALTER TABLE `modifier_grouped`
 -- Filtros para `orders`
 ALTER TABLE `orders`
   ADD CONSTRAINT `fk_order_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_order_channel` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_order_table` FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_shift` FOREIGN KEY (`shift_id`) REFERENCES `shifts` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_method` FOREIGN KEY (`method_id`) REFERENCES `payment_methods` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_paid` FOREIGN KEY (`paid_status`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
+
+-- Filtros para `order_external_details`
+ALTER TABLE `order_external_details`
+  ADD CONSTRAINT `fk_ext_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `order_items`
 ALTER TABLE `order_items`

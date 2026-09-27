@@ -2,20 +2,19 @@ window.BistroPosApp = {
     // ==========================================
     // Variables de Estado
     // ==========================================
+    jsName: 'bistro-pos',
+    isInitialized: false,
+    activeDraftItem: null,
     currentUser: IxeaUser.userId,
-    categories: [],
     currentCategory: null,
+    currentTable: null,
+    currentPerson: null,
+    categories: [],
     menu: [],
     modifiers: [],
     tables: [],
-    tablesHash: null,
-    currentTable: null,
-    personCount: 0,
-    currentPerson: null,
     cart: [],
-    activeDraftItem: null,
-    isInitialized: false,
-    swipeInitialized: false,
+    personCount: 0,
     swipeListeners: [],
 
     // ==========================================
@@ -25,10 +24,12 @@ window.BistroPosApp = {
         if (this.isInitialized) return;
         this.isInitialized = true;
         this.initCartSwipeListener();
-        this.fetchMenu();
-        this.fetchModifiers();
-        this.fetchCategories();
-        this.fetchTables();
+
+        // Ahora pasas un objeto limpio y legible
+        this.fetchMenu({ forceSync: true });
+        this.fetchModifiers({ forceSync: true });
+        this.fetchCategories({ forceSync: true });
+        this.fetchTables({ forceSync: true });
     },
 
     /**
@@ -36,7 +37,7 @@ window.BistroPosApp = {
      */
     initCartSwipeListener: function () {
         const cartEl = document.getElementById('bistro-pos-cart');
-        if (!cartEl || this.swipeInitialized) return;
+        if (!cartEl) return;
 
         let activeItem = null;
         let startX = 0;
@@ -111,76 +112,82 @@ window.BistroPosApp = {
         this.swipeListeners.forEach(listener => {
             listener.target.addEventListener(listener.type, listener.handler, listener.options);
         });
-
-        this.swipeInitialized = true;
-    },
-
-    /**
-     * Se ejecuta automáticamente al cerrar el módulo desde el orquestador de tu app
-     */
-    destroy: function () {
-        // 1. Remover todos los event listeners registrados de forma explícita
-        if (this.swipeListeners && this.swipeListeners.length > 0) {
-            this.swipeListeners.forEach(listener => {
-                listener.target.removeEventListener(listener.type, listener.handler, listener.options);
-            });
-            this.swipeListeners = [];
-        }
-
-        // 2. Reiniciar estados
-        this.swipeInitialized = false;
-        this.cart = [];
-        this.menu = [];
-        this.modifiers = [];
-        this.activeDraftItem = null;
     },
 
     // ==========================================
     // LLAMADAS GET
     // ==========================================
-    fetchMenu: async function () {
+    fetchMenu: async function ({ cacheOnly = false, forceSync = false } = {}) {
         try {
-            const res = await fetch(`/api/v1/bistro-pos/get-menu`);
-            const data = await res.json();
-            this.menu = data.menu;
+            const res = await IxeaData.get("bistro-pos", "get-menu", { cacheOnly, forceSync });
+            if (!res.success) throw new Error(res.message);
+            if ((res.changed || cacheOnly) && res.data) {
+                this.menu = res.data;
+                this.renderMenu();
+            }
         } catch (err) {
             console.error("[POS] Error al obtener productos:", err);
         }
     },
 
-    fetchModifiers: async function () {
+    fetchModifiers: async function ({ cacheOnly = false, forceSync = false } = {}) {
         try {
-            const res = await fetch(`/api/v1/bistro-pos/get-modifiers`);
-            const data = await res.json();
-            this.modifiers = data.groups;
+            const res = await IxeaData.get("bistro-pos", "get-modifiers", { cacheOnly, forceSync });
+            if (!res.success) throw new Error(res.message);
+            if ((res.changed || cacheOnly) && res.data) {
+                this.modifiers = res.data;
+            }
         } catch (err) {
             console.error("[POS] Error al obtener modificadores:", err);
         }
     },
 
-    fetchCategories: async function () {
+    fetchCategories: async function ({ cacheOnly = false, forceSync = false } = {}) {
         try {
-            const res = await fetch('/api/v1/bistro-pos/get-categories');
-            const data = await res.json();
-            this.categories = data.categories;
-            this.renderCategories();
+            const res = await IxeaData.get("bistro-pos", "get-categories", { cacheOnly, forceSync });
+            if (!res.success) throw new Error(res.message);
+            if ((res.changed || cacheOnly) && res.data) {
+                this.categories = res.data;
+                this.renderCategories();
+            }
         } catch (err) {
             console.error("[POS] Error al obtener categorías:", err);
         }
     },
 
-    fetchTables: async function () {
+    fetchTables: async function ({ cacheOnly = false, forceSync = false } = {}) {
         try {
-            const res = await fetch(`/api/v1/bistro-pos/get-tables?hash=${this.tablesHash || ''}`);
-            const data = await res.json();
-            if (data.success && data.changed) {
-                this.tablesHash = data.hash;
-                this.tables = data.tables;
-                this.renderTablesMap();
+            const res = await IxeaData.get("bistro-pos", "get-tables", { cacheOnly, forceSync });
+            if (!res.success) throw new Error(res.message);
+            if ((res.changed || cacheOnly) && res.data) {
+                this.tables = res.data;
             }
+            this.renderTablesMap();
         } catch (err) {
             console.error("[POS] Error al obtener mesas:", err);
         }
+    },
+
+    // ==========================================
+    // Cambio de Mesero
+    // ==========================================
+    switchWaiter: function () {
+        IxeaBouncer.permission = 'can_waiter';
+        IxeaBouncer.onAuth = (data) => {
+            if (data.user) {
+                // Actualiza estado interno y UI
+                this.currentUser = data.user.id;
+
+                const userLabel = document.getElementById('bistro-pos-user');
+                if (userLabel) {
+                    userLabel.innerText = data.user.name;
+                }
+            }
+        };
+        IxeaComponents.openModal('auth', {
+            backdrop: 'md',
+            width: '80'
+        });
     },
 
     // ==========================================
@@ -188,6 +195,7 @@ window.BistroPosApp = {
     // ==========================================
     renderCategories: function () {
         const container = document.getElementById('bistro-pos-categories');
+        if (!container) return;
 
         container.innerHTML = '';
         this.categories.forEach(category => {
@@ -822,8 +830,8 @@ window.BistroPosApp = {
         try {
             // 2. Estructurar el payload que va al servidor
             const orderPayload = {
-                table_id: this.currentTable ? this.currentTable.id : null,
-                waiter_id: this.currentUser ? (this.currentUser.id || this.currentUser) : null,
+                table_id: this.currentTable ?? null,
+                waiter_id: this.currentUser ?? null,
                 items: this.cart.map(item => ({
                     product_id: item.product_id,
                     qty: item.qty,
@@ -831,40 +839,30 @@ window.BistroPosApp = {
                     target: item.target || 0, // 0 = Centro, 1+ = Comensal
                     notes: item.notes || '',
                     modifiers: (item.modifiers || []).map(mod => ({
-                        id: mod.id,
-                        group_id: mod.group_id,
-                        price: parseFloat(mod.price)
+                        id: mod.id
                     }))
                 }))
             };
 
             // 3. Petición al backend
-            const response = await fetch('/api/v1/bistro-pos/process-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                },
-                body: JSON.stringify(orderPayload)
-            });
-
-            const result = await response.json();
+            const res = await IxeaBridge.post('/api/v1/bistro-pos/process-order', orderPayload);
 
             // 4. Cerrar la pantalla de carga antes de mostrar la alerta final
             IxeaComponents.hideLoading();
 
-            if (response.ok && result.success) {
+            if (res.success) {
                 IxeaComponents.showAlert({
                     title: '¡Comanda Enviada!',
-                    text: result.message || 'Orden enviada a cocina con éxito.',
+                    text: res.message || 'Orden enviada a cocina con éxito.',
                     icon: 'success',
                     timer: 2500
                 });
 
                 // Limpiar mesa seleccionada y carrito
                 this.selectTable(null);
+                this.fetchTables();
             } else {
-                throw new Error(result.message || 'No se pudo procesar la orden en cocina.');
+                throw new Error(res.message || 'No se pudo procesar la orden en cocina.');
             }
 
         } catch (error) {

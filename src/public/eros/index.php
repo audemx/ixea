@@ -6,9 +6,11 @@
 
 require_once __DIR__ . '/../../app/vendor/autoload.php';
 
+use App\Core\Config;
 use App\Core\Security;
 use App\Database\Connection;
 
+Config::init();
 Connection::boot();
 
 // 1. Limpieza de URI

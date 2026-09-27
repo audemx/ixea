@@ -1,11 +1,11 @@
 {
     "$schema_version": "1.0",
-    "created_at": "2026-09-13 00:01:42",
+    "created_at": "2026-09-24 04:41:50",
     "database_context": {
         "name": "ixea_db",
         "engine": "MariaDB\/MySQL",
         "description": "Axiom: Base de datos motor de Ixea EROS",
-        "total_tables": 53
+        "total_tables": 54
     },
     "entities": [
         {
@@ -98,15 +98,6 @@
                     "description": "Identificador único (Clave Primaria)."
                 },
                 {
-                    "name": "key",
-                    "type": "varchar(50)",
-                    "nullable": false,
-                    "default": null,
-                    "is_primary_key": false,
-                    "is_foreign_key": false,
-                    "description": "Clave del permiso"
-                },
-                {
                     "name": "name",
                     "type": "varchar(50)",
                     "nullable": false,
@@ -114,6 +105,15 @@
                     "is_primary_key": false,
                     "is_foreign_key": false,
                     "description": "Nombre del permiso"
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Descripción del permiso"
                 },
                 {
                     "name": "module",
@@ -144,17 +144,17 @@
                     "description": "Identificador único (Clave Primaria)."
                 },
                 {
-                    "name": "code",
-                    "type": "varchar(50)",
-                    "nullable": false,
-                    "default": null,
+                    "name": "parent_id",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
                     "is_primary_key": false,
-                    "is_foreign_key": false,
-                    "description": "Campo code."
+                    "is_foreign_key": true,
+                    "description": "Rol padre"
                 },
                 {
                     "name": "name",
-                    "type": "varchar(100)",
+                    "type": "varchar(500)",
                     "nullable": false,
                     "default": null,
                     "is_primary_key": false,
@@ -180,7 +180,15 @@
                     "description": "Fecha y hora de creación del registro."
                 }
             ],
-            "relationships": []
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "parent_id",
+                    "referenced_table": "roles",
+                    "referenced_key": "id",
+                    "constraint_name": "roles_ibfk_1"
+                }
+            ]
         },
         {
             "table_name": "sys_colors",
@@ -3669,7 +3677,7 @@
             "columns": [
                 {
                     "name": "id",
-                    "type": "int(10) unsigned",
+                    "type": "bigint(20) unsigned",
                     "nullable": false,
                     "default": null,
                     "is_primary_key": true,
@@ -3679,8 +3687,8 @@
                 {
                     "name": "user_id",
                     "type": "int(10) unsigned",
-                    "nullable": false,
-                    "default": null,
+                    "nullable": true,
+                    "default": "NULL",
                     "is_primary_key": false,
                     "is_foreign_key": true,
                     "description": "Relaciona con la tabla users"
@@ -3706,8 +3714,8 @@
                 {
                     "name": "table_id",
                     "type": "int(10) unsigned",
-                    "nullable": false,
-                    "default": null,
+                    "nullable": true,
+                    "default": "NULL",
                     "is_primary_key": false,
                     "is_foreign_key": true,
                     "description": "Relaciona con la tabla sys_tables"
@@ -3738,15 +3746,6 @@
                     "is_primary_key": false,
                     "is_foreign_key": false,
                     "description": "Campo ip."
-                },
-                {
-                    "name": "agent",
-                    "type": "varchar(512)",
-                    "nullable": true,
-                    "default": "NULL",
-                    "is_primary_key": false,
-                    "is_foreign_key": false,
-                    "description": "Campo agent."
                 },
                 {
                     "name": "created_at",
@@ -3824,13 +3823,22 @@
                     "description": "1=es una tabla de enumeración"
                 },
                 {
-                    "name": "column_name",
-                    "type": "varchar(50)",
+                    "name": "is_pivot",
+                    "type": "tinyint(1)",
                     "nullable": true,
-                    "default": "NULL",
+                    "default": "0",
                     "is_primary_key": false,
                     "is_foreign_key": false,
-                    "description": "Nombre de la columna para el enum"
+                    "description": "1=es tabla pivote pura N:M"
+                },
+                {
+                    "name": "is_catalog",
+                    "type": "tinyint(1)",
+                    "nullable": true,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "1=es un catálogo"
                 },
                 {
                     "name": "status_id",
@@ -4363,6 +4371,15 @@
                     "description": "Costo del item"
                 },
                 {
+                    "name": "prep_time",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": "0",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tiempo de preparación en minutos"
+                },
+                {
                     "name": "status_id",
                     "type": "int(10) unsigned",
                     "nullable": false,
@@ -4458,7 +4475,7 @@
                     "description": "Emoji de la categoría"
                 },
                 {
-                    "name": "sort_order",
+                    "name": "sort",
                     "type": "int(10) unsigned",
                     "nullable": true,
                     "default": "NULL",
@@ -4855,6 +4872,15 @@
                     "description": "Identificador único (Clave Primaria)."
                 },
                 {
+                    "name": "daily_order",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Número de orden diario"
+                },
+                {
                     "name": "folio",
                     "type": "varchar(20)",
                     "nullable": false,
@@ -4873,12 +4899,21 @@
                     "description": "Usuario que atendió la orden"
                 },
                 {
+                    "name": "channel_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Canal de venta"
+                },
+                {
                     "name": "table_id",
                     "type": "int(10) unsigned",
                     "nullable": true,
                     "default": "NULL",
                     "is_primary_key": false,
-                    "is_foreign_key": false,
+                    "is_foreign_key": true,
                     "description": "Mesa asignada a la orden"
                 },
                 {
@@ -4891,16 +4926,7 @@
                     "description": "Cliente"
                 },
                 {
-                    "name": "type",
-                    "type": "enum('take_away','delivery','dine_in')",
-                    "nullable": false,
-                    "default": "'dine_in'",
-                    "is_primary_key": false,
-                    "is_foreign_key": false,
-                    "description": "Tipo de orden"
-                },
-                {
-                    "name": "people_count",
+                    "name": "people",
                     "type": "int(10) unsigned",
                     "nullable": false,
                     "default": "1",
@@ -4911,8 +4937,8 @@
                 {
                     "name": "items",
                     "type": "int(10)",
-                    "nullable": false,
-                    "default": null,
+                    "nullable": true,
+                    "default": "0",
                     "is_primary_key": false,
                     "is_foreign_key": false,
                     "description": "Cantidad de productos vendidos"
@@ -4938,8 +4964,8 @@
                 {
                     "name": "amount",
                     "type": "decimal(12,2)",
-                    "nullable": false,
-                    "default": null,
+                    "nullable": true,
+                    "default": "0.00",
                     "is_primary_key": false,
                     "is_foreign_key": false,
                     "description": "Total de la venta"
@@ -5020,6 +5046,13 @@
             "relationships": [
                 {
                     "type": "belongsTo",
+                    "foreign_key": "channel_id",
+                    "referenced_table": "channels",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_order_channel"
+                },
+                {
+                    "type": "belongsTo",
                     "foreign_key": "customer_id",
                     "referenced_table": "customers",
                     "referenced_key": "id",
@@ -5048,10 +5081,188 @@
                 },
                 {
                     "type": "belongsTo",
+                    "foreign_key": "table_id",
+                    "referenced_table": "tables",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_order_table"
+                },
+                {
+                    "type": "belongsTo",
                     "foreign_key": "user_id",
                     "referenced_table": "users",
                     "referenced_key": "id",
                     "constraint_name": "fk_order_user"
+                }
+            ]
+        },
+        {
+            "table_name": "order_external_details",
+            "business_purpose": "Complemento de órdenes provenientes de plataformas externas",
+            "primary_key": [
+                "id"
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": true,
+                    "is_foreign_key": false,
+                    "description": "Identificador único (Clave Primaria)."
+                },
+                {
+                    "name": "order_id",
+                    "type": "int(10) unsigned",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": true,
+                    "description": "Relación 1 a 1 con la orden principal"
+                },
+                {
+                    "name": "external_reference",
+                    "type": "varchar(100)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "ID de la orden asignado por la plataforma (ej: UBER-98214)"
+                },
+                {
+                    "name": "external_status",
+                    "type": "varchar(50)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Estado reportado por la API (ej: DRIVER_ASSIGNED, STORE_ACCEPTED)"
+                },
+                {
+                    "name": "display_id",
+                    "type": "varchar(20)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Folio corto visible para el repartidor (ej: #A92)"
+                },
+                {
+                    "name": "user_amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Lo que pagó el cliente final en la app"
+                },
+                {
+                    "name": "payout_amount",
+                    "type": "decimal(12,2)",
+                    "nullable": false,
+                    "default": null,
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Monto neto REAL que la plataforma pagará"
+                },
+                {
+                    "name": "marketplace_fee",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Comisión retenida por la app"
+                },
+                {
+                    "name": "delivery_fee",
+                    "type": "decimal(12,2)",
+                    "nullable": true,
+                    "default": "0.00",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Costo de envío cobrado por la app"
+                },
+                {
+                    "name": "customer_name",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del cliente en la app"
+                },
+                {
+                    "name": "customer_phone",
+                    "type": "varchar(30)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Teléfono o alias temporal del cliente"
+                },
+                {
+                    "name": "delivery_address",
+                    "type": "text",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Dirección de entrega"
+                },
+                {
+                    "name": "courier_name",
+                    "type": "varchar(150)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Nombre del repartidor"
+                },
+                {
+                    "name": "courier_phone",
+                    "type": "varchar(30)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Teléfono del repartidor"
+                },
+                {
+                    "name": "payload",
+                    "type": "longtext",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Payload raw en JSON que envió el Webhook de la plataforma (ideal para auditoría)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de creación del registro."
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "nullable": true,
+                    "default": "current_timestamp()",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Fecha y hora de última actualización del registro."
+                }
+            ],
+            "relationships": [
+                {
+                    "type": "belongsTo",
+                    "foreign_key": "order_id",
+                    "referenced_table": "orders",
+                    "referenced_key": "id",
+                    "constraint_name": "fk_ext_order"
                 }
             ]
         },
@@ -5146,7 +5357,7 @@
                 {
                     "name": "discount",
                     "type": "decimal(10,2)",
-                    "nullable": true,
+                    "nullable": false,
                     "default": "0.00",
                     "is_primary_key": false,
                     "is_foreign_key": false,
@@ -5523,6 +5734,33 @@
                     "description": "Descripción de la estación"
                 },
                 {
+                    "name": "emoji",
+                    "type": "varchar(10)",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Emoji de la estación"
+                },
+                {
+                    "name": "type",
+                    "type": "enum('kds')",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Tipo de estación: kds"
+                },
+                {
+                    "name": "sort",
+                    "type": "int(10) unsigned",
+                    "nullable": true,
+                    "default": "NULL",
+                    "is_primary_key": false,
+                    "is_foreign_key": false,
+                    "description": "Orden de visualización de la estación"
+                },
+                {
                     "name": "status_id",
                     "type": "int(10) unsigned",
                     "nullable": false,
@@ -5638,15 +5876,6 @@
                     "is_primary_key": false,
                     "is_foreign_key": false,
                     "description": "Orientación de la mesa"
-                },
-                {
-                    "name": "count",
-                    "type": "int(10) unsigned",
-                    "nullable": false,
-                    "default": "0",
-                    "is_primary_key": false,
-                    "is_foreign_key": false,
-                    "description": "Número de personas en la mesa"
                 },
                 {
                     "name": "use_status_id",

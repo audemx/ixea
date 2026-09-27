@@ -1,6 +1,6 @@
 <?php
 
-namespace Classes;
+namespace App\Enums;
 
 /**
  * Clase autogenerada desde la tabla catálogo 'sys_actions'
@@ -9,18 +9,18 @@ class SysAction
 {
     public const APPROVE = 6;
     public const ASSIGN = 17;
+    public const AUTH = 16;
     public const CANCEL = 8;
-    public const CREATE = 1;
+    public const CREATE = 2;
     public const DELETE = 4;
     public const DOWNLOAD = 11;
     public const EXPORT = 12;
     public const LAUNCH = 18;
     public const LOGIN = 14;
     public const LOGOUT = 15;
-    public const PASSWORD_RESET = 16;
     public const POST = 9;
     public const PRINT = 13;
-    public const READ = 2;
+    public const READ = 1;
     public const REJECT = 7;
     public const RESTORE = 5;
     public const SYNC = 20;
@@ -36,6 +36,7 @@ class SysAction
         return [
             self::APPROVE => 'approve',
             self::ASSIGN => 'assign',
+            self::AUTH => 'auth',
             self::CANCEL => 'cancel',
             self::CREATE => 'create',
             self::DELETE => 'delete',
@@ -44,7 +45,6 @@ class SysAction
             self::LAUNCH => 'launch',
             self::LOGIN => 'login',
             self::LOGOUT => 'logout',
-            self::PASSWORD_RESET => 'password_reset',
             self::POST => 'post',
             self::PRINT => 'print',
             self::READ => 'read',

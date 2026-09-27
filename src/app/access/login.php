@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Database\Connection;
+use App\Core\Security;
 use App\Models\User;
 use App\Models\RolePermission;
 use Illuminate\Database\Capsule\Manager as Capsule;
@@ -19,22 +20,8 @@ if (session_status() === PHP_SESSION_NONE) {
 Connection::boot();
 
 // Redirigir si ya existe sesión activa
-if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role_id'] === 0 || $_SESSION['role_id'] === 1) {
-        header("Location: /dashboard");
-    } elseif ($_SESSION['role_id'] === 2) {
-        header("Location: /till");
-    } elseif ($_SESSION['role_id'] === 3) {
-        header("Location: /commander");
-    } elseif ($_SESSION['role_id'] === 4) {
-        header("Location: /kitchen");
-    } elseif ($_SESSION['role_id'] === 5) {
-        header("Location: /clients");
-    } elseif ($_SESSION['role_id'] === 6) {
-        header("Location: /suppliers");
-    } else {
-        header("Location: /index");
-    }
+if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
+    header("Location: /dashboard");
     exit;
 }
 
@@ -85,41 +72,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $_SESSION['login_attempts'] < $inte
                 // Regenerar ID de sesión por seguridad
                 session_regenerate_id(true);
                 $_SESSION['login_attempts'] = 0;
-                $_SESSION['user_id']        = (int)$user->user_id;
+                $_SESSION['user_id']        = (int)$user->id;
                 $_SESSION['role_id']        = (int)$user->role_id;
                 $_SESSION['user_name']      = $user->first_name;
                 $_SESSION['role_name']      = $user->role ? $user->role->name : 'Usuario';
                 $_SESSION['user_email']     = $user->email;
                 $_SESSION['fingerprint']    = md5($_SERVER['HTTP_USER_AGENT'] . "IXEA_SALT_2026");
                 
-                // Carga de Permisos mediante Eloquent
-                if ($_SESSION['user_id'] === 0) {
-                    $_SESSION['user_permissions'] = ['all_access']; 
-                } else {
-                    $_SESSION['user_permissions'] = RolePermission::with('permission')
-                        ->where('role_id', $_SESSION['role_id'])
-                        ->where('status_id', 1)
-                        ->get()
-                        ->pluck('permission.key')
-                        ->toArray();
-                }
-                
-                if ($_SESSION['role_id'] === 0 || $_SESSION['role_id'] === 1) {
+                if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     header("Location: /dashboard");
-                } elseif ($_SESSION['role_id'] === 2) {
-                    header("Location: /till");
-                } elseif ($_SESSION['role_id'] === 3) {
-                    header("Location: /commander");
-                } elseif ($_SESSION['role_id'] === 4) {
-                    header("Location: /kitchen");
-                } elseif ($_SESSION['role_id'] === 5) {
-                    header("Location: /clients");
-                } elseif ($_SESSION['role_id'] === 6) {
-                    header("Location: /suppliers");
-                } else {
-                    header("Location: /index");
+                    exit;
                 }
-                exit;
 
             } else {
                 $_SESSION['login_attempts']++;

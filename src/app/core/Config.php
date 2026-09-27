@@ -2,8 +2,6 @@
 
 namespace App\Core;
 
-use Dotenv\Dotenv;
-
 class Config
 {
     public static function init(): void

@@ -6,11 +6,8 @@
 
 use App\Classes\App;
 
-$isSuper = $currentUser['isSuper'] ?? false;
-$userPermissions = $currentUser['userPermissions'] ?? [];
-
-// Cargar las aplicaciones mediante la arquitectura de clases (Eloquent por debajo)
-$userApps = App::getAccessibleApps($isSuper, $userPermissions);
+// Cargar las aplicaciones mediante la arquitectura de clases
+$userApps = App::getAccessibleApps();
 ?>
 
 <div id="stage-launchpad" class="stage">

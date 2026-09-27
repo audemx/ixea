@@ -1,131 +1,7 @@
 /**
  * IXEA OS - User Interfase:
- * IxeaDocks, IxeaStages, IxeaWidgets
+ * IxeaDocks, IxeaStages
  */
-
-/**
- * IxeaComponets: Componentes reutilizables.
- */
-const IxeaComponents = {
-    // Alertas personalizadas con SweetAlert
-    showAlert: function ({ title = '¡Atención!', text = '', icon = 'warning', timer = null }) {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: icon,
-            background: '#1e293b',
-            backdrop: 'backdrop-blur-sm bg-slate-900/50',
-            customClass: {
-                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
-                title: 'text-white font-bold',
-                htmlContainer: 'text-slate-300',
-                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition'
-            },
-            buttonsStyling: false,
-            timer: timer,
-            timerProgressBar: Boolean(timer),
-            showConfirmButton: !timer
-        });
-    },
-
-    showConfirm: function ({ title = 'Confirmar', text = '', icon = 'warning', confirmButtonText = 'Confirmar', cancelButtonText = 'Cancelar', onConfirm }) {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: icon,
-            background: '#1e293b', // bg-slate-800
-            backdrop: 'backdrop-blur-sm bg-slate-900/50',
-            showCancelButton: true,
-            reverseButtons: true, // Muestra primero el botón de cancelar
-            confirmButtonColor: '#3b82f6', // blue-500
-            cancelButtonColor: '#64748b', // slate-500
-            confirmButtonText: confirmButtonText,
-            cancelButtonText: cancelButtonText,
-            customClass: {
-                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
-                title: 'text-white font-bold',
-                htmlContainer: 'text-slate-300',
-                cancelButton: 'bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition',
-                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition'
-            },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed && onConfirm) {
-                onConfirm();
-            }
-        });
-    },
-
-    showLoading: function ({ text = 'Procesando...' }) {
-        Swal.fire({
-            text: text,
-            background: '#1e293b',
-            backdrop: 'backdrop-blur-sm bg-slate-900/50',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            customClass: {
-                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
-                htmlContainer: 'text-slate-300 font-medium'
-            },
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    },
-
-    hideLoading: function () {
-        Swal.close();
-    },
-
-    openModal: function (operation, options = {}) {
-        const stage = IxeaStages.activeStage.replace("stage-", "");
-        const modal = document.getElementById(`${stage}-modal`);
-        const template = document.getElementById(`${stage}-template-${operation}`);
-        if (!modal || !template) return;
-
-        modal.innerHTML = '';
-
-        let modalClassList = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3'
-        let contentClassList = 'bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-2xl';
-
-        // Definir clases del modal
-        options.backdrop ? modalClassList += ` backdrop-blur-${options.backdrop}` : modalClassList += ' backdrop-blur-sm';
-        modal.className = modalClassList;
-
-        // Definir clases del contenido
-        options.width ? contentClassList += ` w-${options.width}` : contentClassList += ' w-full';
-        options.height ? contentClassList += ` h-${options.height}` : contentClassList += '';
-        options.maxw ? contentClassList += ` max-w-${options.maxw}` : contentClassList += '';
-        options.maxh ? contentClassList += ` max-h-${options.maxh}` : contentClassList += '';
-        options.xalign ? contentClassList += ` text-${options.xalign}` : contentClassList += ' text-center';
-        options.yalign ? contentClassList += ` items-${options.yalign}` : contentClassList += ' items-center';
-        options.scroll ? contentClassList += ` overflow-${options.scroll}` : contentClassList += ' overflow-hidden';
-        options.flex ? contentClassList += ` flex flex-${options.flex}` : contentClassList += '';
-
-        const child = document.createElement('div');
-        child.className = contentClassList;
-
-        const clone = template.content.cloneNode(true);
-        child.appendChild(clone);
-        modal.appendChild(child);
-
-        // Ejecutar callback si existe
-        if (options.onOpen) options.onOpen();
-
-        // Configurar Focus Automático (Si se solicita)
-        if (options.focusId) {
-            const el = document.getElementById(options.focusId);
-            if (el) el.focus();
-        }
-    },
-
-    closeModal: function () {
-        const stage = IxeaStages.activeStage.replace("stage-", "");
-        const modal = document.getElementById(`${stage}-modal`);
-        if (modal) modal.classList.add('hidden');
-    }
-};
 
 /**
  * IxeaDocks: Contenedores laterales de aplicaciones y widgets.
@@ -228,12 +104,7 @@ const IxeaStages = {
             ]).then(() => {
                 console.log(`[System] ${jsObjectName} successfully loaded.`);
 
-                // 3. Inicializamos la App si tiene un objeto Init
-                // Por ejemplo, si el JS de caja define window.TillApp
-                if (window[jsObjectName] && typeof window[jsObjectName].init === 'function') {
-                    window[jsObjectName].init();
-                }
-                // Registro dinámico en la biblioteca al cargar
+                // 3. Registro dinámico e inicialización de App
                 if (window[jsObjectName]) {
                     this.AppLibrary[jsObjectName] = window[jsObjectName];
                     if (typeof window[jsObjectName].init === 'function') {
@@ -460,63 +331,362 @@ const IxeaStages = {
     }
 };
 
+/**
+ * IxeaComponets: Componentes reutilizables.
+ */
+const IxeaComponents = {
+    // Alertas personalizadas con SweetAlert
+    showAlert: function ({ title = '¡Atención!', text = '', icon = 'warning', timer = null }) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            background: '#1e293b',
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                title: 'text-white font-bold',
+                htmlContainer: 'text-slate-300',
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition'
+            },
+            buttonsStyling: false,
+            timer: timer,
+            timerProgressBar: Boolean(timer),
+            showConfirmButton: !timer
+        });
+    },
+
+    showConfirm: function ({ title = 'Confirmar', text = '', icon = 'warning', confirmButtonText = 'Confirmar', cancelButtonText = 'Cancelar', onConfirm }) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            background: '#1e293b', // bg-slate-800
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            showCancelButton: true,
+            reverseButtons: true, // Muestra primero el botón de cancelar
+            confirmButtonColor: '#3b82f6', // blue-500
+            cancelButtonColor: '#64748b', // slate-500
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                title: 'text-white font-bold',
+                htmlContainer: 'text-slate-300',
+                cancelButton: 'bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition',
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 mx-2 rounded-xl transition'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed && onConfirm) {
+                onConfirm();
+            }
+        });
+    },
+
+    showLoading: function ({ text = 'Procesando...' }) {
+        Swal.fire({
+            text: text,
+            background: '#1e293b',
+            backdrop: 'backdrop-blur-sm bg-slate-900/50',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'border border-slate-700 rounded-2xl p-5 shadow-2xl',
+                htmlContainer: 'text-slate-300 font-medium'
+            },
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    },
+
+    hideLoading: function () {
+        Swal.close();
+    },
+
+    openModal: function (operation, options = {}) {
+        const stage = IxeaStages.activeStage.replace("stage-", "");
+        const modal = document.getElementById(`${stage}-modal`);
+
+        let template;
+        if (operation === 'auth') {
+            template = document.getElementById(`bouncer-template`);
+        } else {
+            template = document.getElementById(`${stage}-template-${operation}`);
+        }
+
+        if (!modal || !template) return;
+
+        modal.innerHTML = '';
+
+        let modalClassList = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3'
+        let contentClassList = 'bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-2xl';
+
+        // Definir clases del modal
+        options.backdrop ? modalClassList += ` backdrop-blur-${options.backdrop}` : modalClassList += ' backdrop-blur-sm';
+        modal.className = modalClassList;
+
+        // Definir clases del contenido
+        options.width ? contentClassList += ` w-${options.width}` : contentClassList += ' w-full';
+        options.height ? contentClassList += ` h-${options.height}` : contentClassList += '';
+        options.maxw ? contentClassList += ` max-w-${options.maxw}` : contentClassList += '';
+        options.maxh ? contentClassList += ` max-h-${options.maxh}` : contentClassList += '';
+        options.xalign ? contentClassList += ` text-${options.xalign}` : contentClassList += ' text-center';
+        options.yalign ? contentClassList += ` items-${options.yalign}` : contentClassList += ' items-center';
+        options.scroll ? contentClassList += ` overflow-${options.scroll}` : contentClassList += ' overflow-hidden';
+        options.flex ? contentClassList += ` flex flex-${options.flex}` : contentClassList += '';
+
+        const child = document.createElement('div');
+        child.className = contentClassList;
+
+        const clone = template.content.cloneNode(true);
+        child.appendChild(clone);
+        modal.appendChild(child);
+
+        // Ejecutar callback si existe
+        if (options.onOpen) options.onOpen();
+
+        // Configurar Focus Automático (Si se solicita)
+        if (options.focusId) {
+            const el = document.getElementById(options.focusId);
+            if (el) el.focus();
+        }
+    },
+
+    closeModal: function () {
+        const stage = IxeaStages.activeStage.replace("stage-", "");
+        const modal = document.getElementById(`${stage}-modal`);
+        if (modal) modal.classList.add('hidden');
+    }
+};
 
 /**
- * Iniciadores Globales
+ * IxeaBouncer - Control de permisos
  */
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Iniciar servicios de fondo
-    IxeaKernel.init();
-    // 2. Activamos doble toque
-    IxeaDocks.initTouchTriggers();
+const IxeaBouncer = {
+    pin: [],
+    permission: null,
+    onAuth: null,
 
-    console.log("Ixea EROS: Boot Completed.");
-});
+    /** Manejo de entrada de PIN */
+    handlePinInput: function (input) {
+        if (input === 'cancel') {
+            IxeaComponents.closeModal();
+            return;
+        }
+        if (input === 'delete') {
+            this.pin.pop();
+            this.renderPin();
+            return;
+        }
+        if (this.pin.length < 4) {
+            this.pin.push(input);
+            this.renderPin();
+        }
+        if (this.pin.length === 4) {
+            this.verifyPin();
+        }
+    },
 
-// Coreografía de presentación
-document.addEventListener('DOMContentLoaded', () => {
-    // Retraso de 500ms antes de empezar toda la coreografía
-    setTimeout(() => {
-        const welcome = document.getElementById('intro-welcome');
-        const afterWelcome = document.getElementById('intro-a');
-        const logo = document.getElementById('intro-logo');
-        const sloganWords = document.querySelectorAll('.slogan-word');
+    /** Renderizado del PIN */
+    renderPin: function () {
+        const stage = IxeaStages.activeStage.replace("stage-", "");
+        const modal = document.getElementById(`${stage}-modal`);
+        const pinDots = modal.querySelectorAll('.pin-dot');
 
-        // 1. "BIENVENIDO A"
-        const text = welcome.innerText;
-        welcome.innerHTML = text.split('').map((char, i) =>
-            `<span class="letter" style="animation-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
-        ).join('');
-        welcome.classList.add('is-ready');
+        if (pinDots) {
+            pinDots.forEach((pinDot, index) => {
+                pinDot.className = `pin-dot w-3.5 h-3.5 rounded-full ${index < this.pin.length ? 'bg-indigo-700' : 'bg-slate-500'}`;
+            });
+        }
+    },
 
-        setTimeout(() => {
-            afterWelcome.style.visibility = 'visible';
-        }, 1000);
+    /** Verificación del PIN */
+    verifyPin: async function () {
+        const pin = this.pin.join('');
 
-        // 2. "IXEA OS"
-        setTimeout(() => {
-            logo.classList.add('logo-reveal');
-        }, 2000);
+        if (!pin) {
+            IxeaComponents.showAlert({ text: 'PIN inválido', icon: 'warning' });
+            return;
+        }
 
-        // 3. Slogan
-        const delays = [3000, 3700, 4800];
-        sloganWords.forEach((word, i) => {
-            setTimeout(() => {
-                word.classList.add('slogan-land');
-            }, delays[i]);
+        try {
+            const body = {
+                pin: pin,
+                permission: IxeaBouncer.permission
+            };
+            const res = await IxeaBridge.post('/api/v1/bouncer/auth-operation', body);
+            if (res.success) {
+                // 1. Guardar la referencia del callback asignado
+                const callback = IxeaBouncer.onAuth;
+
+                // 2. Limpiar el estado global del modal/bouncer
+                IxeaComponents.closeModal();
+                IxeaBouncer.pin = [];
+                IxeaBouncer.permission = null;
+                IxeaBouncer.onAuth = null;
+
+                if (typeof callback === 'function') {
+                    callback(res.data);
+                }
+            } else {
+                this.pin = [];
+                this.renderPin();
+                IxeaComponents.showAlert({ text: res?.message || 'PIN inválido', icon: 'error' });
+            }
+        } catch (err) {
+            this.pin = [];
+            this.renderPin();
+            console.error('[VerifyPin] Error:', err);
+            IxeaComponents.showAlert({
+                text: err.message || 'Error al conectar con el servidor.',
+                icon: 'error'
+            });
+        }
+    },
+
+    can: function (key) {
+        const permissions = window.IXEA_USER?.permissions ?? [];
+        return permissions.includes('all_access') || permissions.includes(key);
+    },
+
+    requestAuth: function (key, callback) {
+        Swal.fire({
+            title: 'Autorización Requerida',
+            text: 'Ingresa PIN de autorización',
+            input: 'password',
+            inputAttributes: { maxlength: 4, inputmode: 'numeric', style: 'text-align: center; letter-spacing: 10px;' },
+            showCancelButton: true,
+            confirmButtonText: 'Validar',
+            preConfirm: (pin) => {
+                let fd = new FormData();
+                fd.append('pin', pin);
+                fd.append('auth_type', key); // Corregido: antes decía 'permission'
+
+                return fetch('/api/post-handler.php?action=verify_auth', {
+                    method: 'POST',
+                    body: fd
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.success) throw new Error(data.message);
+                        return data;
+                    })
+                    .catch(err => Swal.showValidationMessage(err.message));
+            }
+        }).then((result) => {
+            // Corregido: antes decía 'onAuthorized'
+            if (result.isConfirmed && callback) callback(result.value);
         });
+    },
 
-        // 4. Salida de bienvenida y entrada de Launchpad
+    lockBtn: function (btn) {
+        if (!btn || btn.disabled || btn.classList.contains('btn-loading')) return false;
+
+        // Guardamos el contenido original para restaurarlo después
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.dataset.isLocked = "true";
+
+        btn.disabled = true;
+        btn.classList.add('btn-loading');
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Procesando...`;
+        return true;
+    },
+
+    // Restaura el botón a su estado original
+    releaseBtn: function (btn) {
+        if (!btn || !btn.dataset.originalHtml) return;
+
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = btn.dataset.originalHtml;
+        delete btn.dataset.isLocked;
+    },
+
+    /** Muestra un pantallazo de carga frente a todo para bloquear todo proceso **/
+    showLoading: function (message = 'Procesando...') {
+        const activeStage = IxeaStages.activeStage;
+        const mainPos = document.getElementById(activeStage);
+
+        let overlay = document.getElementById(this.overlayId);
+        if (!overlay) {
+            // Crear el overlay si no existe
+            overlay = document.createElement('div');
+            overlay.id = this.overlayId;
+            overlay.className = "animate__animated animate__fadeInUp";
+            overlay.innerHTML = `
+                <div class="container-fluid d-flex flex-column align-items-center justify-content-center text-center">
+                    <div class="bouncer-spinner mb-3"></div>
+                    <div class="bouncer-text w-100" id="bouncer-msg">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+    },
+
+    // Elimina el elemento de bloqueo
+    hideLoading: function () {
+        const overlay = document.getElementById(this.overlayId);
+        if (overlay) {
+            overlay.remove();
+        }
+    },
+};
+
+/**
+ * Objeto para manejar la intro
+ */
+const IxeaUI = {
+    init: function () {
+        this.intro();
+    },
+
+    intro: function () {
+        // Retraso de 500ms antes de empezar toda la coreografía
         setTimeout(() => {
-            const wrapper = document.querySelector('.intro-wrapper');
-            wrapper.classList.add('sweep-left');
+            const welcome = document.getElementById('intro-welcome');
+            const afterWelcome = document.getElementById('intro-a');
+            const logo = document.getElementById('intro-logo');
+            const sloganWords = document.querySelectorAll('.slogan-word');
+
+            // 1. "BIENVENIDO A"
+            const text = welcome.innerText;
+            welcome.innerHTML = text.split('').map((char, i) =>
+                `<span class="letter" style="animation-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
+            ).join('');
+            welcome.classList.add('is-ready');
 
             setTimeout(() => {
-                wrapper.remove();
+                afterWelcome.style.visibility = 'visible';
+            }, 1000);
 
-                // CAMBIO: Activamos la etapa del Launchpad
-                IxeaStages.switch('stage-launchpad', 'Launchpad');
-            }, 1200); // Sincronizado con la salida
-        }, 6200);
-    }, 500); // <-- EL DELAY DE MEDIO SEGUNDO
-});
+            // 2. "IXEA OS"
+            setTimeout(() => {
+                logo.classList.add('logo-reveal');
+            }, 2000);
+
+            // 3. Slogan
+            const delays = [3000, 3700, 4800];
+            sloganWords.forEach((word, i) => {
+                setTimeout(() => {
+                    word.classList.add('slogan-land');
+                }, delays[i]);
+            });
+
+            // 4. Salida de bienvenida y entrada de Launchpad
+            setTimeout(() => {
+                const wrapper = document.querySelector('.intro-wrapper');
+                wrapper.classList.add('sweep-left');
+
+                setTimeout(() => {
+                    wrapper.remove();
+
+                    // CAMBIO: Activamos la etapa del Launchpad
+                    IxeaStages.switch('stage-launchpad', 'Launchpad');
+                }, 1200); // Sincronizado con la salida
+            }, 6200);
+        }, 500); // <-- EL DELAY DE MEDIO SEGUNDO
+    }
+}

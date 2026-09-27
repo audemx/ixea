@@ -27,20 +27,11 @@ $getJsVersion = function($relativePath) use ($publicPath) {
 
 <!-- Contexto global del usuario autenticado para el Kernel de JS -->
 <script>
-window.IXEA_USER = {
-    permissions: <?= json_encode($currentUser['userPermissions'] ?? []); ?>,
-    user_id: <?= json_encode($currentUser['userId']); ?>,
-    user_name: <?= json_encode($currentUser['userName']); ?>,
-    user_role: <?= json_encode($currentUser['roleName']); ?>,
-    user_email: <?= json_encode($currentUser['userEmail']); ?>,
-    is_super: <?= json_encode((bool)$currentUser['isSuper']); ?>
-};
-
 const IxeaUser = {
     userId: <?= json_encode($currentUser['userId']); ?>,
     userName: <?= json_encode($currentUser['userName']); ?>,
     roleName: <?= json_encode($currentUser['roleName']); ?>,
-    userEmail: <?= json_encode($currentUser['userEmail']); ?>,
+    userEmail: <?= json_encode($currentUser['userEmail']); ?>
 };
 
 if ('serviceWorker' in navigator) {

@@ -79,6 +79,12 @@ try {
     deleteDirectory($modelsDir);
     mkdir($modelsDir, 0777, true);
 
+    // 1. Obtener tablas pivote explícitas desde sys_tables
+    $explicitPivots = Capsule::table('sys_tables')
+        ->where('is_pivot', 1)
+        ->pluck('name')
+        ->toArray();
+
     $tables = Capsule::select("
         SELECT TABLE_NAME 
         FROM information_schema.TABLES 
@@ -104,10 +110,11 @@ try {
         $referencedByTable[$fk->REFERENCED_TABLE_NAME][] = $fk;
     }
 
+    // Identificar estructuras pivote SOLO para las declaradas en sys_tables
     $pivotTables = [];
-    foreach ($fkByTable as $tName => $fks) {
-        if (count($fks) === 2) {
-            $pivotTables[$tName] = $fks;
+    foreach ($explicitPivots as $pName) {
+        if (isset($fkByTable[$pName]) && count($fkByTable[$pName]) === 2) {
+            $pivotTables[$pName] = $fkByTable[$pName];
         }
     }
 

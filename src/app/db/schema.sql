@@ -391,11 +391,11 @@ CREATE TABLE `payment_methods` (
 --
 CREATE TABLE `permissions` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `key` varchar(50) NOT NULL COMMENT 'Clave del permiso',
   `name` varchar(50) NOT NULL COMMENT 'Nombre del permiso',
+  `description` text NULL COMMENT 'Descripción del permiso',
   `module` varchar(50) NULL COMMENT 'Módulo al que pertenece el permiso',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_permissions_key` (`key`)
+  UNIQUE KEY `uk_permissions_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de permisos de usuarios';
 
 -- --------------------------------------------------------
@@ -537,12 +537,12 @@ CREATE TABLE `role_permissions` (
 --
 CREATE TABLE `roles` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) NOT NULL,
-  `name` varchar(100) NOT NULL,
+  `parent_id` int(10) UNSIGNED NULL COMMENT 'Rol padre',
+  `name` varchar(500) NOT NULL,
   `description` varchar(255) NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_role_code` (`code`),
+  FOREIGN KEY (`parent_id`) REFERENCES roles(id) ON UPDATE CASCADE,
   UNIQUE KEY `uk_role_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de roles del sistema';
 
@@ -748,15 +748,14 @@ CREATE TABLE `sys_colors` (
 -- Registro de bitácora del sistema
 --
 CREATE TABLE `sys_logs` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla users',
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) UNSIGNED NULL COMMENT 'Relaciona con la tabla users',
   `action_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla sys_actions',
   `status_id` int(10) UNSIGNED NOT NULL COMMENT 'Estatus del proceso 14=success, 15=error',
-  `table_id` int(10) UNSIGNED NOT NULL COMMENT 'Relaciona con la tabla sys_tables',
+  `table_id` int(10) UNSIGNED NULL COMMENT 'Relaciona con la tabla sys_tables',
   `record_id` int(10) UNSIGNED NULL COMMENT 'ID de la referencia',
   `details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
   `ip` varchar(45) NULL,
-  `agent` varchar(512) NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `fk_syslog_user` (`user_id`),
@@ -775,7 +774,8 @@ CREATE TABLE `sys_tables` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT 'Nombre de la tabla',
   `is_enum` tinyint(1) DEFAULT 0 COMMENT '1=es una tabla de enumeración',
-  `column_name` varchar(50) NULL COMMENT 'Nombre de la columna para el enum',
+  `is_pivot` TINYINT(1) DEFAULT 0 COMMENT '1=es tabla pivote pura N:M',
+  `is_catalog` TINYINT(1) DEFAULT 0 COMMENT '1=es un catálogo',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus de la tabla: 1=active, 2=inactive, 4=discontinued, 5=archived',
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),

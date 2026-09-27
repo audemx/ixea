@@ -2,15 +2,23 @@
 // /app/controllers/V1/BistroPos.php
 
 namespace App\Controllers\V1;
-use App\Models\MenuCategory;
-use App\Models\Menu;
-use App\Models\ModifierGroup;
-use App\Models\Order;
-use App\Models\OrderDetail;
-use App\Models\OrderDetailModifier;
-use App\Models\Table;
+
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\Menu;
+use App\Models\MenuCategory;
+use App\Models\Modifier;
+use App\Models\ModifierGroup;
+use App\Models\Order;
+use App\Models\OrderExternalDetail;
+use App\Models\OrderItem;
+use App\Models\OrderItemModifier;
+use App\Models\Table;
+use App\Enums\Channel;
+use App\Enums\Status;
+use App\Enums\SysAction;
+use App\Enums\SysTable;
+use Illuminate\Database\Capsule\Manager as Capsule;
 use Exception;
 use Throwable;
 
@@ -22,36 +30,53 @@ class BistroPos extends Controller
     public function getTables(): void
     {
         try {
-            $tableHash = $this->getTableHash('tables');
+            $user = Security::authorize();
+            $userId = (int) ($user['userId'] ?? null);
+
+            // Validamos que el usuario esté autenticado
+            if (is_null($userId)) {
+                $message = 'Debes iniciar sesión para realizar esta acción.';
+                $this->sysLog($userId, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::TABLES, details: 'Error de autorización');
+                $this->error($message, 400);
+            }
+
+            // Declaramos las tablas involucradas en este endpoint
+            $serverHash = $this->getHash(['tables', 'orders']);
             $clientHash = $this->getParam('hash');
 
-            if ($clientHash === $tableHash) {
+            if ($clientHash === $serverHash) {
                 $this->jsonResponse([
                     'success' => true,
-                    'changed' => false,
-                    'hash' => $tableHash
+                    'changed' => false
                 ]);
             }
 
-            $rawTables = Table::with('useStatus')->where('status_id', 1)->get();
+            $rawTables = Table::with('useStatus')->where('status_id', Status::ACTIVE)->get();
             
             $tables = [];
             foreach ($rawTables as $table) {
+                $order = Order::where('table_id', $table->id)
+                    ->whereNull('paid_status')
+                    ->latest('created_at')
+                    ->first();
+
                 $tables[] = [
-                    'id' => $table->id,
-                    'name' => $table->name,
-                    'count' => $table->count,
-                    'status' => $table->useStatus->name
+                    'id'     => $table->id,
+                    'name'   => $table->name,
+                    'count'  => $order ? ($order->people ?? 0) : 0,
+                    'status' => $table->useStatus->name ?? null
                 ];
             }
+
+            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::TABLES, details: "Mesas obtenidas exitosamente");
 
             $this->jsonResponse([
                 'success' => true,
                 'changed' => true,
-                'hash'    => $tableHash,
-                'tables'  => $tables
+                'hash'    => $serverHash,
+                'data'    => $tables
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->error($e->getMessage(), 500);
         }
     }
@@ -62,23 +87,49 @@ class BistroPos extends Controller
     public function getCategories(): void
     {
         try {
-            $rawCategories = MenuCategory::where('status_id', 1)->get();
+            $user = Security::authorize();
+            $userId = (int) ($user['userId'] ?? null);
+
+            // Validamos que el usuario esté autenticado
+            if (is_null($userId)) {
+                $message = 'Error de autorización.';
+                $this->sysLog($userId, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::MENU_CATEGORIES, details: $message);
+                $this->error($message, 400);
+            }
+
+            // Declaramos las tablas involucradas en este endpoint
+            $serverHash = $this->getHash('menu_categories');
+            $clientHash = $this->getParam('hash');
+
+            if ($clientHash === $serverHash) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'changed' => false
+                ]);
+            }
+
+            $rawCategories = MenuCategory::where('status_id', Status::ACTIVE)
+                ->orderBy('sort', 'asc')
+                ->get();
             
             $categories = [];
             foreach ($rawCategories as $category) {
                 $categories[] = [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'emoji' => $category->emoji,
-                    'sort_order' => $category->sort_order
+                    'id'         => $category->id,
+                    'name'       => $category->name,
+                    'emoji'      => $category->emoji
                 ];
             }
 
+            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::MENU_CATEGORIES, details: "Categorías del menú obtenidas exitosamente");
+
             $this->jsonResponse([
-                'success' => true,
-                'categories'  => $categories
+                'success'    => true,
+                'changed'    => true,
+                'hash'       => $serverHash,
+                'data'       => $categories
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->error($e->getMessage(), 500);
         }
     }
@@ -89,31 +140,55 @@ class BistroPos extends Controller
     public function getMenu(): void
     {
         try {
+            $user = Security::authorize();
+            $userId = (int) ($user['userId'] ?? null);
+
+            // Validamos que el usuario esté autenticado
+            if (is_null($userId)) {
+                $message = 'Debes iniciar sesión para realizar esta acción.';
+                $this->sysLog($userId, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::MENU, details: 'Error de autorización');
+                $this->error($message, 400);
+            }
+            
+            // Declaramos las tablas involucradas en este endpoint
+            $serverHash = $this->getHash(['menu', 'menu_modifier_groups']);
+            $clientHash = $this->getParam('hash');
+
+            if ($clientHash === $serverHash) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'changed' => false
+                ]);
+            }
+            
             $rawMenu = Menu::with(['menuModifierGroups' => function ($query) {
-                $query->where('status_id', 1);
-            }])->where('status_id', 1)->get();
+                $query->where('status_id', Status::ACTIVE);
+            }])->where('status_id', Status::ACTIVE)->get();
             
             $menu = [];
             foreach ($rawMenu as $product) {
-                // Extraer solo los group_id de la tabla pivote/relación
                 $groups = $product->menuModifierGroups->pluck('group_id')->toArray();
 
                 $menu[] = [
-                    'id' => $product->id,
-                    'name' => $product->name,
+                    'id'          => $product->id,
+                    'name'        => $product->name,
                     'description' => $product->description,
                     'category_id' => $product->category_id,
-                    'area_id' => $product->area_id,
-                    'price' => (float) $product->price,
-                    'groups' => $groups
+                    'area_id'     => $product->area_id,
+                    'price'       => (float) $product->price,
+                    'groups'      => $groups
                 ];
             }
 
+            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::MENU, details: "Menú obtenido exitosamente");
+
             $this->jsonResponse([
                 'success' => true,
-                'menu'  => $menu
+                'changed' => true,
+                'hash'    => $serverHash,
+                'data'    => $menu
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->error($e->getMessage(), 500);
         }
     }
@@ -124,16 +199,35 @@ class BistroPos extends Controller
     public function getModifiers(): void
     {
         try {
-            // Cargamos la relación intermedia modifierGroupeds y dentro de ella el modelo modifier
+            $user = Security::authorize();
+            $userId = (int) ($user['userId'] ?? null);
+
+            // Validamos que el usuario esté autenticado
+            if (is_null($userId)) {
+                $message = 'Debes iniciar sesión para realizar esta acción.';
+                $this->sysLog($userId, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::MODIFIER_GROUPS, details: 'Error de autorización');
+                $this->error($message, 400);
+            }
+
+            // Declaramos las tablas involucradas en este endpoint
+            $serverHash = $this->getHash(['modifier_groups', 'modifier_grouped', 'modifiers']);
+            $clientHash = $this->getParam('hash');
+
+            if ($clientHash === $serverHash) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'changed' => false
+                ]);
+            }
+
             $rawGroups = ModifierGroup::with(['modifierGroupeds' => function ($query) {
-                $query->where('status_id', 1)->with(['modifier' => function ($mQuery) {
-                    $mQuery->where('status_id', 1);
+                $query->where('status_id', Status::ACTIVE)->with(['modifier' => function ($mQuery) {
+                    $mQuery->where('status_id', Status::ACTIVE);
                 }]);
-            }])->where('status_id', 1)->get();
+            }])->where('status_id', Status::ACTIVE)->get();
             
             $modifierGroups = [];
             foreach ($rawGroups as $group) {
-                // Mapeamos los modificadores a través de la tabla pivote/intermedia
                 $modifiers = [];
                 foreach ($group->modifierGroupeds as $pivot) {
                     if ($pivot->modifier) {
@@ -155,11 +249,15 @@ class BistroPos extends Controller
                 ];
             }
 
+            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::MODIFIER_GROUPS, details: "Grupos de modificadores obtenidos exitosamente");
+
             $this->jsonResponse([
                 'success' => true,
-                'groups'  => $modifierGroups
+                'changed' => true,
+                'hash'    => $serverHash,
+                'data'    => $modifierGroups
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->error($e->getMessage(), 500);
         }
     }
@@ -170,107 +268,131 @@ class BistroPos extends Controller
      */
     public function processOrder(): void
     {
-        header('Content-Type: application/json');
-
         $user = Security::authorize();
-        $userId = $user['userId'] ?? null;
+        $userId = (int) ($user['userId'] ?? null);
+
+        // Validamos que el usuario esté autenticado
+        if (is_null($userId)) {
+            $message = 'Debes iniciar sesión para realizar esta acción.';
+            $this->sysLog($userId, SysAction::CREATE, statusId: Status::ERROR, details: 'Error de autorización');
+            $this->error($message, 400);
+        }
+
         $data = $this->getJsonBody();
 
         if (!$data || empty($data['items']) || !is_array($data['items'])) {
             $message = 'Estructura de la orden inválida o vacía.';
-            $response = ['success' => false, 'message' => $message];
-            // Registro de log de error: (user_id, action_id, status_id, table_id, record_id, details)
-            $this->systemLog(
-                $userId, // user
-                1, // action: create
-                15, // status: Error
-                null, // table_id
-                null, // record_id
-                $message // details
-            );
-            
-            http_response_code(400);
-            echo json_encode($response);
-            return;
+            $this->sysLog($userId, SysAction::CREATE, statusId: Status::ERROR, details: 'Estructura de la orden inválida o vacía');
+            $this->error($message, 400);
         }
 
-        $tableId = !empty($data['table_id']) ? (int) $data['table_id'] : null;
-        $orderType = $data['type'] ?? ($tableId ? 'dine_in' : 'take_away');
-        $items = $data['items'];
-
         try {
-            $order = DB::transaction(function () use ($tableId, $userId, $items, $orderType) {
-                
-                // 1. Manejo de estado de la mesa y resolución de la orden
-                if ($tableId) {
+            $order = Capsule::transaction(function () use ($data, $userId) {
+
+                $waiterId    = !empty($data['waiter_id']) ? (int)$data['waiter_id'] : $userId;
+                $channelName = $data['channel'] ?? 'LOCAL';
+                $tableId     = isset($data['table_id']) && $data['table_id'] !== '' ? (int)$data['table_id'] : null;
+                $items       = $data['items'];
+                $targets     = array_column($items, 'target');
+
+                $channelId = defined("Classes\\Channel::{$channelName}") 
+                    ? constant("Classes\\Channel::{$channelName}") 
+                    : 1;
+
+                $diners = array_filter($targets, fn($target) => (int)$target > 0);
+                $people = !empty($diners) ? count(array_unique($diners)) : 1;
+
+                $today     = date('Y-m-d');
+                $datePart  = date('ymd');
+                $lastOrder = Order::whereDate('created_at', $today)
+                    ->lockForUpdate()
+                    ->orderByDesc('daily_order')
+                    ->first();
+                $nextOrder = $lastOrder ? ($lastOrder->daily_order + 1) : 1;
+                $folio     = "O-{$datePart}-{$nextOrder}";
+
+                // 1. Resolución/Creación de la Orden
+                if ($channelName === 'LOCAL' && $tableId !== null) {
+                    // Local con mesa
                     $table = Table::where('id', $tableId)->lockForUpdate()->first();
 
                     if (!$table) {
                         throw new Exception("La mesa con ID {$tableId} no existe.");
                     }
 
-                    // Validación del estado de la mesa (use_status_id)
-                    if ($table->use_status_id == 6) { // pending
-                        throw new Exception("La mesa ya solicitó la cuenta (Pending). No es posible agregar ítems.");
+                    if ($table->use_status_id == Status::PENDING) {
+                        throw new Exception("La mesa ya solicitó la cuenta. No es posible agregar ítems.");
                     }
 
-                    if ($table->use_status_id == 11) { // open
-                        // Cambiar estado a cerrado (closed) y crear nueva orden
-                        $table->use_status_id = 12;
+                    if ($table->use_status_id == Status::OPEN) {
+                        // Mesa abierta: crear una nueva orden
+                        $table->use_status_id = Status::CLOSED;
                         $table->save();
 
+                        $this->sysLog($userId, SysAction::UPDATE, statusId: Status::SUCCESS, tableId: SysTable::TABLES, details: "Mesa {$tableId} cerrada");
+
                         $order = Order::create([
-                            'folio'       => 'ORD-' . strtoupper(uniqid()),
-                            'user_id'     => $userId,
+                            'daily_order' => $nextOrder,
+                            'folio'       => $folio,
+                            'user_id'     => $waiterId,
+                            'channel_id'  => $channelId,
                             'table_id'    => $tableId,
-                            'type'        => 'dine_in',
-                            'paid_status' => 6, // 6 = pending (orden activa no pagada)
-                            'amount'      => 0.00,
+                            'people'      => $people,
                             'items'       => 0
                         ]);
-                    } else { // status 12 = closed (mesa con consumo activo)
-                        // Buscar la orden pendiente/abierta activa para esta mesa
+                    } else {
+                        // Mesa cerrada: agregar a la última orden
                         $order = Order::where('table_id', $tableId)
-                            ->where('paid_status', 6)
+                            ->whereNull('paid_status')
                             ->latest('created_at')
                             ->first();
 
                         if (!$order) {
-                            // Si la mesa está en estado 12 pero no se encuentra la orden abierta, se genera una
                             $order = Order::create([
-                                'folio'       => 'ORD-' . strtoupper(uniqid()),
-                                'user_id'     => $userId,
+                                'daily_order' => $nextOrder,
+                                'folio'       => $folio,
+                                'user_id'     => $waiterId,
+                                'channel_id'  => $channelId,
                                 'table_id'    => $tableId,
-                                'type'        => 'dine_in',
-                                'paid_status' => 6,
-                                'amount'      => 0.00,
+                                'people'      => $people,
                                 'items'       => 0
                             ]);
                         }
                     }
                 } else {
-                    // Sin mesa asignada -> delivery o take_away
-                    $finalType = in_array($orderType, ['delivery', 'take_away']) ? $orderType : 'take_away';
-                    
+                    // Channel: delivery o local sin mesa
                     $order = Order::create([
-                        'folio'       => 'ORD-' . strtoupper(uniqid()),
+                        'daily_order' => $nextOrder,
+                        'folio'       => $folio,
                         'user_id'     => $userId,
+                        'channel_id'  => $channelId,
                         'table_id'    => null,
-                        'type'        => $finalType,
-                        'paid_status' => 6,
-                        'amount'      => 0.00,
+                        'people'      => $people,
                         'items'       => 0
                     ]);
+                    // Guardar detalles de apis externos
+                    if (!empty($data['external_reference'])) {
+                        OrderExternalDetail::create([
+                            'order_id'           => $order->id,
+                            'external_reference' => $data['external_reference'],
+                            'external_status'    => $data['external_status'] ?? 'ACCEPTED',
+                            'user_amount'        => (float)($data['user_amount'] ?? 0.00),
+                            'payout_amount'      => (float)($data['payout_amount'] ?? 0.00),
+                            'marketplace_fee'    => (float)($data['marketplace_fee'] ?? 0.00),
+                            'delivery_fee'       => (float)($data['delivery_fee'] ?? 0.00),
+                            'customer_name'      => $data['customer_name'] ?? null,
+                            'customer_phone'     => $data['customer_phone'] ?? null,
+                            'payload'            => isset($data['raw_payload']) ? json_encode($data['raw_payload']) : null
+                        ]);
+                    }
                 }
 
-                // 2. Registro de Ítems y Modificadores
-                $orderTotal = 0.00;
-                $totalItemCount = 0;
-                $targetsList = [];
+                // 2. Insertar ítems
+                $nextItemNumber = $order->orderItems()->count() + 1;
 
-                foreach ($items as $index => $itemData) {
+                foreach ($items as $itemData) {
                     $productId = $itemData['product_id'];
-                    $quantity  = (float) ($itemData['quantity'] ?? 1);
+                    $quantity  = (float) ($itemData['qty'] ?? 1);
                     $target    = (int) ($itemData['target'] ?? 0);
                     $notes     = $itemData['notes'] ?? null;
 
@@ -279,30 +401,28 @@ class BistroPos extends Controller
                         throw new Exception("El producto con ID {$productId} no existe.");
                     }
 
-                    $unitPrice  = (float) $product->price;
-                    $itemAmount = $unitPrice * $quantity;
+                    $unitary    = (float) $product->price;
+                    $itemAmount = $unitary * $quantity;
 
-                    // Crear el ítem de la orden
                     $orderItem = OrderItem::create([
                         'order_id'   => $order->id,
-                        'item'       => $index + 1,
+                        'item'       => $nextItemNumber++,
                         'target'     => $target,
                         'product_id' => $productId,
                         'notes'      => $notes,
-                        'status_id'  => 6, // 6 = pending
+                        'status_id'  => Status::PENDING,
                         'quantity'   => $quantity,
-                        'unitary'    => $unitPrice,
+                        'unitary'    => $unitary,
                         'discount'   => 0.00,
                         'amount'     => $itemAmount
                     ]);
 
                     $modifiersAmount = 0.00;
 
-                    // Procesar modificadores si existen
                     if (!empty($itemData['modifiers']) && is_array($itemData['modifiers'])) {
                         foreach ($itemData['modifiers'] as $modData) {
-                            $modId  = $modData['modifier_id'];
-                            $modQty = (float) ($modData['quantity'] ?? 1.00);
+                            $modId    = $modData['id'];
+                            $modQty   = (float) ($modData['quantity'] ?? 1.00);
 
                             $modifier = Modifier::find($modId);
                             $modPrice = $modifier ? (float) $modifier->price : 0.00;
@@ -320,61 +440,35 @@ class BistroPos extends Controller
                         }
                     }
 
-                    // Actualizar el monto del ítem sumando sus modificadores
                     if ($modifiersAmount > 0) {
-                        $itemAmount += $modifiersAmount;
-                        $orderItem->amount = $itemAmount;
+                        $orderItem->amount += $modifiersAmount;
                         $orderItem->save();
                     }
-
-                    $orderTotal += $itemAmount;
-                    $totalItemCount += $quantity;
-                    $targetsList[] = $target;
                 }
 
-                // 3. Validación y actualización de cantidad de personas (people_count)
-                $distinctTargets = array_filter(array_unique($targetsList), function ($t) {
-                    return $t > 0;
-                });
+                // 3. Recalcular totales reales directamente desde la base de datos
+                $totalItems = (float) $order->orderItems()->sum('quantity');
+                $allTargets = $order->orderItems()->where('target', '>', 0)->pluck('target')->toArray();
+                $peopleCount = count(array_unique($allTargets));
 
-                $peopleCount = count($distinctTargets) > 0 ? count($distinctTargets) : 1;
-
-                // 4. Actualización final de la orden
-                $order->amount = $order->amount + $orderTotal;
-                $order->items = $order->items + $totalItemCount;
-                $order->people_count = max($order->people_count, $peopleCount);
+                $order->items  = $totalItems;
+                $order->people = max($order->people ?? 1, $peopleCount > 0 ? $peopleCount : 1);
                 $order->save();
 
                 return $order;
             });
 
-            $response = [
+            // Registrar SysLog exitoso indicando SysTable::ORDERS
+            $this->sysLog($userId, SysAction::CREATE, Status::SUCCESS, SysTable::ORDERS, $order->id, 'Comanda enviada a cocina');
+
+            $this->jsonResponse([
                 'success' => true,
-                'message' => 'Orden procesada y enviada a cocina con éxito.',
-                'data'    => [
-                    'order_id'     => $order->id,
-                    'folio'        => $order->folio,
-                    'table_id'     => $order->table_id,
-                    'people_count' => $order->people_count,
-                    'amount'       => (float) $order->amount
-                ]
-            ];
+                'message' => 'Orden procesada y enviada a cocina con éxito.'
+            ]);
 
-            $this->systemLog('PROCESS_ORDER_SUCCESS', $data, $response, 'info', $userId);
-            
-            http_response_code(200);
-            echo json_encode($response);
-
-        } catch (Throwable $e) {
-            $errorResponse = [
-                'success' => false,
-                'message' => 'Error al procesar la comanda: ' . $e->getMessage()
-            ];
-
-            $this->systemLog('PROCESS_ORDER_ERROR', $data, $errorResponse, 'error', $userId);
-
-            http_response_code(500);
-            echo json_encode($errorResponse);
+        } catch (\Throwable $e) {
+            $this->sysLog($userId, SysAction::CREATE, statusId: Status::ERROR, tableId: SysTable::ORDERS, details: $e->getMessage());
+            $this->error('Error al procesar la comanda: ' . $e->getMessage(), 500);
         }
     }
 }

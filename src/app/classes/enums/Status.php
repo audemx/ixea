@@ -1,6 +1,6 @@
 <?php
 
-namespace Classes;
+namespace App\Enums;
 
 /**
  * Clase autogenerada desde la tabla catálogo 'statuses'
@@ -22,7 +22,7 @@ class Status
     public const APPLIED = 13;
     public const SUCCESS = 14;
     public const ERROR = 15;
-    public const UNKNOWN = 16;
+    public const REJECTED = 16;
 
     /**
      * Devuelve el catálogo completo en array [id => nombre]
@@ -45,7 +45,7 @@ class Status
             self::APPLIED => 'applied',
             self::SUCCESS => 'success',
             self::ERROR => 'error',
-            self::UNKNOWN => 'unknown',
+            self::REJECTED => 'rejected',
         ];
     }
 }

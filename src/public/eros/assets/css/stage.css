@@ -6,6 +6,7 @@
     width: 100vw;
     height: calc(100vh - var(--top-bar-height));
     overflow: hidden;
+    background-color: #F0F2F5;
 }
 
 #dynamic-stages {
@@ -26,12 +27,12 @@
     height: 100%;
     display: none;
     backdrop-filter: var(--mac-blur);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
-    pointer-events: auto; 
+    pointer-events: auto;
 }
 
 .stage.active {
@@ -42,11 +43,14 @@
 @keyframes stage-entry {
     0% {
         opacity: 0;
-        transform: translateX(-100px); /* Empieza 100px a la izquierda */
+        transform: translateX(-100px);
+        /* Empieza 100px a la izquierda */
     }
+
     100% {
         opacity: 1;
-        transform: translateX(0);      /* Llega a su posición real */
+        transform: translateX(0);
+        /* Llega a su posición real */
     }
 }
 
@@ -59,18 +63,31 @@
     text-align: center;
 }
 
-.launchpad-app { cursor: pointer; transition: transform 0.2s; }
+.launchpad-app {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
 
-.launchpad-app:hover { transform: scale(1.1); }
+.launchpad-app:hover {
+    transform: scale(1.1);
+}
 
 .launchpad-app .icon-box {
-    width: 80px; height: 80px; background: white; border-radius: 18px;
-    margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;
-    font-size: 2.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 18px;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
+
 /* Esto le da un brillo sutil del mismo color que el icono */
 .launchpad-app .icon-box i {
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     transition: all 0.3s ease;
 }
 
@@ -83,5 +100,14 @@
     overflow-y: auto;
 }
 
-@keyframes stage-appear { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+@keyframes stage-appear {
+    from {
+        opacity: 0;
+        transform: scale(1.05);
+    }
 
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

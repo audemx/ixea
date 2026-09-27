@@ -1,6 +1,6 @@
 <?php
 
-namespace Classes;
+namespace App\Enums;
 
 /**
  * Clase autogenerada desde la tabla catálogo 'sys_colors'

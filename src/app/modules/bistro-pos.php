@@ -8,7 +8,7 @@
         <div class="flex items-center space-x-3 overflow-hidden mr-2">
             <!-- Mesas -->
             <button onclick="BistroPosApp.toggleTablesDrawer()"
-                class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow flex items-center space-x-1.5 transition flex-shrink-0">
+                class="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-bold px-3 py-1.5 border border-slate-700 rounded-xl text-xs shadow flex items-center space-x-1.5 transition flex-shrink-0">
                 <span id="bistro-pos-table">Seleccionar Mesa</span>
             </button>
 
@@ -18,7 +18,7 @@
 
         <!-- Mesero -->
         <div class="flex items-center space-x-2 text-xs flex-shrink-0">
-            <button onclick="IxeaComponents.openModal('auth', { backdrop: 'md',width: '80' })"
+            <button onclick="BistroPosApp.switchWaiter()"
                 class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded-xl transition">
                 <span id="bistro-pos-user" class="font-semibold text-slate-200 hidden sm:inline"><?php echo $currentUser['userName'] ?></span>
             </button>
@@ -174,34 +174,6 @@
                 Aceptar
             </button>
         </div>
-    </div>
-</template>
-
-<!-- Modal de cambio de mesero -->
-<template id="bistro-pos-template-auth">
-    <h3 class="font-bold text-lg text-white mb-1">Cambiar Mesero</h3>
-    <p class="text-xs text-slate-400 mb-4">Ingresa tu PIN de 4 dígitos</p>
-
-    <div class="flex justify-center space-x-3 mb-6">
-        <div class="w-3.5 h-3.5 rounded-full bg-indigo-500"></div>
-        <div class="w-3.5 h-3.5 rounded-full bg-indigo-500"></div>
-        <div class="w-3.5 h-3.5 rounded-full bg-slate-700"></div>
-        <div class="w-3.5 h-3.5 rounded-full bg-slate-700"></div>
-    </div>
-
-    <div class="grid grid-cols-3 gap-3 mb-2">
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">1</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">2</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">3</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">4</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">5</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">6</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">7</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">8</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">9</button>
-        <button onclick="IxeaComponents.closeModal()" class="bg-rose-500/20 text-rose-300 py-3 rounded-xl font-bold text-xs border border-rose-500/30">Cancel</button>
-        <button class="bg-slate-900 active:bg-slate-700 py-3 rounded-xl font-bold text-lg border border-slate-700">0</button>
-        <button class="bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-sm">⌫</button>
     </div>
 </template>
 

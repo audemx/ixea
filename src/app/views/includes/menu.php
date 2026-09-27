@@ -24,7 +24,9 @@ $viewsPath = dirname(__DIR__);
                 <li><a class="dropdown-item small" href="#" onclick="alert('Configuración')"><i class="bi bi-gear-fill me-2"></i>Ajustes del Sistema</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <a class="dropdown-item small text-sfred" href="/eros/logout">
+                    <a class="dropdown-item small text-sfred"
+                        style="cursor: pointer;"
+                        onclick="localStorage.clear(); window.location.href='/eros/logout';">
                         <i class="bi bi-power me-2"></i>Cerrar Sesión
                     </a>
                 </li>

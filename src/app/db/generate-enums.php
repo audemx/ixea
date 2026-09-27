@@ -70,7 +70,7 @@ try {
     // 0. Inicializar Eloquent con la configuración de la BD
     Connection::boot();
 
-    // 1. Intentar obtener la instancia PDO
+    // 1. Obtener la instancia PDO
     $pdo = Capsule::connection()->getPdo();
     
     // 2. Obtener el nombre de la base de datos conectada
@@ -84,18 +84,17 @@ try {
     // 1. Obtener las tablas marcadas como enum en sys_tables
     $enumTables = Capsule::table('sys_tables')
         ->where('is_enum', 1)
-        ->get(['name', 'column_name']);
+        ->get(['name']);
 
     if ($enumTables->isEmpty()) {
         exit("⚠️ No se encontraron tablas marcadas con is_enum = 1 en 'sys_tables'.\n");
     }
 
     $generatedCount = 0;
-
+    $nameColumn = 'name'; // Nombre de columna para usar como valor del Enum.
     foreach ($enumTables as $tableConfig) {
         $tableName  = $tableConfig->name;
-        $nameColumn = $tableConfig->column_name ?? 'name';
-
+        
         // Validar si la tabla existe en la base de datos
         $tableExists = Capsule::select("
             SELECT TABLE_NAME 
@@ -114,7 +113,7 @@ try {
         $rows = Capsule::table($tableName)->select('id', $nameColumn)->get();
 
         $code  = "<?php\n\n";
-        $code .= "namespace Classes;\n\n";
+        $code .= "namespace App\Enums;\n\n";
         $code .= "/**\n";
         $code .= " * Clase autogenerada desde la tabla catálogo '{$tableName}'\n";
         $code .= " */\n";

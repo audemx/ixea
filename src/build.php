@@ -36,12 +36,11 @@ if (!file_exists($schemaPath) || !file_exists($sysDataPath)) {
     exit(1);
 }
 
-// Comandos Base
+// Comandos Base: Reinicia la base de datos y crea la base de datos ixea_db
 $dockerReset  = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. -e "DROP DATABASE IF EXISTS ixea_db; CREATE DATABASE ixea_db;"';
 $dockerCreate = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . escapeshellarg($schemaPath);
-$dockerFill   = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . escapeshellarg($sysDataPath);
 
-$commands = [$dockerReset, $dockerCreate, $dockerFill];
+$commands = [$dockerReset, $dockerCreate];
 
 // Si se pasó un módulo por consola, verificamos si existe su schema-{modulo}.sql
 if ($module) {
@@ -55,6 +54,10 @@ if ($module) {
         exit(1);
     }
 }
+
+// Ingresamos datos de sistema (sys-data.sql)
+$dockerFill   = 'docker exec -i dev-db-1 mariadb -u root -pixea_1234. ixea_db < ' . escapeshellarg($sysDataPath);
+$commands[] = $dockerFill;
 
 // Unimos todos los comandos en una sola ejecución en cadena
 $dbResetCommand = implode(' && ', $commands);

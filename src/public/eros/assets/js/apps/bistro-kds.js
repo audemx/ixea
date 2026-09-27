@@ -1,275 +1,697 @@
-/** assets/js/apps/bistro-kds.js **/
 window.BistroKdsApp = {
-    refreshTimer: null,
-    orders: [],
-    activeFilter: 'all',
+    jsName: 'bistro-kds',
     isInitialized: false,
-    pollIntervalMs: 5000, // Ajustable según la carga de red en cocina
 
-    /**
-     * Inicialización del módulo KDS
-     */
+    deliveryStatus: 'pending', // 'pending' | 'delivered'
+    currentStation: 0,         // 0 = Todas, N = Estación específica
+
+    orders: [],
+    stations: [],
+
+    orderHash: null,
+    autoRender: null,
+    countdown: 0,
+
+    // Almacén local de marcas temporales por orden: { [order_id]: { [item_id]: 'release' | 'cancel' } }
+    markedItems: {},
+
+    toStream: [
+        ['get-orders', () => ({
+            deliveryStatus: BistroKdsApp.deliveryStatus
+        })]
+    ],
+
     init: function () {
         if (this.isInitialized) return;
-        console.log("[KDS] Inicializando pantalla de cocina...");
         this.isInitialized = true;
 
-        this.loadOrders(); // Carga inicial
-        this.startMonitor();
+        this.fetchStations({ forceSync: true });
+        this.fetchOrders({ forceSync: true });
     },
 
-    /**
-     * Purga de recursos al cerrar la vista/módulo
-     */
     destroy: function () {
-        console.log("[KDS] Purgando recursos e intervalos...");
-        this.stopMonitor();
         this.orders = [];
+        this.markedItems = {};
         this.isInitialized = false;
     },
 
-    /**
-     * Inicia la consulta periódica al nodo central
-     */
-    startMonitor: function () {
-        if (!this.refreshTimer) {
-            console.log('[KDS] Monitor de cocina: Iniciado');
-            this.refreshTimer = setInterval(() => {
-                this.loadOrders();
-            }, this.pollIntervalMs);
+    onTick: {
+        sec: function () {
+            this.processAndCalculateTimers();
+            this.updateDomTimers();
+        },
+        stream: function () {
+            this.checkAndRenderOnStream();
         }
     },
 
-    /**
-     * Detiene el monitoreo en segundo plano
-     */
-    stopMonitor: function () {
-        if (this.refreshTimer) {
-            clearInterval(this.refreshTimer);
-            this.refreshTimer = null;
-            console.log('[KDS] Monitor de cocina: Detenido');
-        }
-    },
-
-    /**
-     * Solicitud HTTP al nodo central/servidor
-     */
-    loadOrders: async function () {
+    // ==========================================
+    // API FETCHING
+    // ==========================================
+    fetchStations: async function ({ cacheOnly = false, forceSync = false } = {}) {
         try {
-            const res = await fetch(`/api/kds?action=get_active_orders&station=${this.activeFilter}`);
-            const data = await res.json();
-
-            if (data.success) {
-                this.orders = data.orders;
-                this.renderTickets();
-                this.updateMetrics(data.metrics);
+            const res = await IxeaData.get("bistro-kds", "get-stations", { cacheOnly, forceSync });
+            if (!res.success) throw new Error(res.message);
+            if ((res.changed || cacheOnly) && res.data) {
+                this.stations = res.data;
+                this.renderStations();
             }
         } catch (err) {
-            console.error("[KDS] Error conectando con el nodo central:", err);
+            console.error("[KDS] Error obteniendo estaciones:", err);
         }
     },
 
-    /**
-     * Renderiza la grilla de comanda en pantalla
-     */
-    renderTickets: function (ordersToRender = null) {
-        const orders = ordersToRender !== null ? ordersToRender : this.orders;
-        const container = document.getElementById('kds-tickets-container');
+    fetchOrders: async function ({ cacheOnly = false, forceSync = false } = {}) {
+        try {
+            const params = {
+                deliveryStatus: this.deliveryStatus,
+                currentStation: this.currentStation,
+                cacheOnly,
+                forceSync
+            };
+
+            const res = await IxeaData.get("bistro-kds", "get-orders", params);
+
+            // Guardar el hash actual de la operación
+            this.orderHash = IxeaData.timestamps['bistro-kds']['get-orders'] || null;
+
+            if ((res.changed || cacheOnly) && res.data) {
+                this.cancelAutoRender();
+                this.processAndCalculateTimers();
+                this.render();
+                this.calculateKPIs();
+            }
+        } catch (err) {
+            console.error("[KDS] Error obteniendo comandas:", err);
+        }
+    },
+
+    // ==========================================
+    // ESTADOS Y FILTROS
+    // ==========================================
+    setDeliveryStatus: function (status) {
+        this.deliveryStatus = status;
+
+        const btnPending = document.getElementById('bistro-kds-get-pending');
+        const btnDelivered = document.getElementById('bistro-kds-get-delivered');
+
+        if (status === 'pending') {
+            btnPending.className = 'px-3 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow';
+            btnDelivered.className = 'px-3 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition';
+        } else {
+            btnDelivered.className = 'px-3 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow';
+            btnPending.className = 'px-3 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition';
+        }
+
+        this.fetchOrders();
+    },
+
+    filterStation: function (stationId) {
+        this.currentStation = parseInt(stationId);
+
+        const buttons = document.querySelectorAll('#bistro-kds-stations button');
+        buttons.forEach(btn => {
+            const btnStationId = parseInt(btn.id.replace('bistro-kds-station-', ''));
+            if (btnStationId === this.currentStation) {
+                btn.className = 'bg-indigo-600 text-white px-3 py-1 rounded-xl font-bold whitespace-nowrap shadow text-xs transition shrink-0';
+            } else {
+                btn.className = 'bg-slate-800 text-slate-200 px-3 py-1 rounded-xl whitespace-nowrap border border-slate-700 text-xs transition shrink-0';
+            }
+        });
+
+        this.processAndCalculateTimers();
+        this.render();
+        this.calculateKPIs();
+    },
+
+    // ==========================================
+    // KPIS Y TIEMPOS
+    // ==========================================
+    calculateKPIs: function () {
+        const avgEl = document.getElementById('bistro-kds-kpi-avg');
+        const countsEl = document.getElementById('bistro-kds-kpi-counts');
+        const labelEl = document.getElementById('bistro-kds-kpi-count-label');
+
+        if (labelEl) {
+            labelEl.textContent = this.deliveryStatus === 'pending' ? 'Por cerrar' : 'Despachados';
+        }
+
+        let totalItems = 0;
+        let totalPeople = 0;
+        let totalOrders = this.orders.length;
+
+        let sumItemsSec = 0;
+
+        this.orders.forEach(o => {
+            totalPeople += o.people.length;
+
+            o.people.forEach(p => {
+                totalItems += p.items.length;
+
+                p.items.forEach(i => {
+                    sumItemsSec += (i.running || 0);
+                });
+            });
+        });
+
+        if (avgEl) {
+            const avgI = totalItems ? Math.round((sumItemsSec / totalItems) / 60) : 0;
+            avgEl.textContent = `${avgI}m`;
+        }
+
+        if (countsEl) {
+            countsEl.textContent = `🍴 ${totalItems} | 👥 ${totalPeople} | 📋 ${totalOrders}`;
+        }
+    },
+
+    formatTime: function (seconds) {
+        if (seconds === undefined || seconds === null) return '00:00';
+        const isNegative = seconds < 0;
+        const absSec = Math.abs(seconds);
+        const min = String(Math.floor(absSec / 60)).padStart(2, '0');
+        const sec = String(absSec % 60).padStart(2, '0');
+        return `${isNegative ? '-' : ''}${min}:${sec}`;
+    },
+
+    // ==========================================
+    // PROCESAMIENTO, FILTRADO Y TIEMPOS (CLIENTE)
+    // ==========================================
+    processAndCalculateTimers: function () {
+        const nowMs = Date.now();
+        const filtered = [];
+        const rawOrders = (typeof IxeaData !== 'undefined' && IxeaData.cache && IxeaData.cache['bistro-kds'])
+            ? (IxeaData.cache['bistro-kds']['get-orders'] || [])
+            : (this.rawOrders || []);
+
+        rawOrders.forEach(rawOrder => {
+            const validPeople = [];
+
+            (rawOrder.people || []).forEach(person => {
+                const validItems = (person.items || []).filter(item => {
+                    return this.currentStation === 0 || item.station_id === this.currentStation;
+                }).map(item => {
+                    const rawItemTime = item.created_at ? new Date(item.created_at).getTime() : nowMs;
+                    const itemCreatedMs = isNaN(rawItemTime) ? nowMs : rawItemTime;
+
+                    // Tiempo transcurrido e individual en segundos
+                    const itemRunning = Math.max(0, Math.floor((nowMs - itemCreatedMs) / 1000));
+                    const targetPrepSec = (item.prep_time || 0) * 60;
+
+                    // Tiempo restante en segundos
+                    const itemRemaining = targetPrepSec - itemRunning;
+
+                    return {
+                        ...item,
+                        created_at_ms: itemCreatedMs,
+                        running: itemRunning,
+                        remaining: itemRemaining
+                    };
+                });
+
+                if (validItems.length > 0) {
+                    // Persona: running máximo (item más antiguo) y remaining mínimo (el más demorado)
+                    const personRunning = Math.max(...validItems.map(i => i.running));
+                    const personRemaining = Math.min(...validItems.map(i => i.remaining));
+
+                    validPeople.push({
+                        ...person,
+                        running: personRunning,
+                        remaining: personRemaining,
+                        items: validItems
+                    });
+                }
+            });
+
+            if (validPeople.length > 0) {
+                // Orden: running máximo de sus personas y remaining mínimo
+                const orderRunning = Math.max(...validPeople.map(p => p.running));
+                const orderRemaining = Math.min(...validPeople.map(p => p.remaining));
+
+                filtered.push({
+                    ...rawOrder,
+                    running: orderRunning,
+                    remaining: orderRemaining,
+                    people: validPeople
+                });
+            }
+        });
+
+        this.orders = filtered;
+        this.sortDataHierarchy();
+    },
+
+    // ==========================================
+    // ORDENAMIENTO POR PRIORIDAD DE URGENCIA (ADR-013)
+    // ==========================================
+    sortDataHierarchy: function () {
+        const getUrgScore = (entity) => {
+            if (entity.remaining) {
+                return entity.remaining;
+            }
+            return -(entity.running || 0);
+        };
+
+        this.orders.forEach(order => {
+            order.people.forEach(person => {
+                person.items.sort((a, b) => getUrgScore(a) - getUrgScore(b));
+            });
+            order.people.sort((a, b) => {
+                const minA = a.items.length ? Math.min(...a.items.map(getUrgScore)) : getUrgScore(a);
+                const minB = b.items.length ? Math.min(...b.items.map(getUrgScore)) : getUrgScore(b);
+                return minA - minB;
+            });
+        });
+
+        this.orders.sort((a, b) => {
+            const minA = a.people.length ? Math.min(...a.people.map(p => p.items.length ? Math.min(...p.items.map(getUrgScore)) : getUrgScore(p))) : getUrgScore(a);
+            const minB = b.people.length ? Math.min(...b.people.map(p => p.items.length ? Math.min(...p.items.map(getUrgScore)) : getUrgScore(p))) : getUrgScore(b);
+            return minA - minB;
+        });
+    },
+
+    // ==========================================
+    // RENDERIZADO
+    // ==========================================
+    renderStations: function () {
+        const container = document.getElementById('bistro-kds-stations');
         if (!container) return;
 
-        if (orders.length === 0) {
+        let html = `
+            <button onclick="BistroKdsApp.filterStation(0)" id="bistro-kds-station-0" 
+                    class="${this.currentStation === 0 ? 'bg-indigo-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-200 border border-slate-700'} px-3 py-1 rounded-xl whitespace-nowrap text-xs transition shrink-0">
+                Todas
+            </button>
+        `;
+
+        this.stations.forEach(st => {
+            const isSel = this.currentStation === st.id;
+            html += `
+                <button onclick="BistroKdsApp.filterStation(${st.id})" id="bistro-kds-station-${st.id}" 
+                        class="${isSel ? 'bg-indigo-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-200 border border-slate-700'} px-3 py-1 rounded-xl whitespace-nowrap text-xs transition shrink-0">
+                    ${st.emoji || '🍳'} ${st.name}
+                </button>
+            `;
+        });
+
+        container.innerHTML = html;
+    },
+
+    /** Genera todas las tarjetas de pedidos */
+    render: function () {
+        const container = document.getElementById('bistro-kds-cards');
+        const template = document.getElementById('bistro-kds-template-order');
+        if (!container || !template) return;
+
+        container.innerHTML = '';
+
+        if (this.orders.length === 0) {
             container.innerHTML = `
-                <div class="w-full flex flex-col items-center justify-center h-full text-slate-500">
-                    <span class="text-5xl mb-3">👨🏻‍🍳</span>
-                    <p class="text-sm font-semibold">No hay comandas pendientes en esta estación</p>
+                <div class="flex-1 flex items-center justify-center text-slate-500 py-20">
+                    <p class="text-xl font-bold">Sin comandas ${this.deliveryStatus === 'pending' ? 'pendientes' : 'entregadas'}</p>
                 </div>`;
             return;
         }
 
-        container.innerHTML = orders.map(order => {
-            const isDelayed = order.elapsed_minutes >= 15;
-            const isWarning = order.elapsed_minutes >= 8 && order.elapsed_minutes < 15;
+        this.orders.forEach(order => {
+            const clone = template.content.cloneNode(true);
+            const card = clone.querySelector('.kds-order-card');
+            card.dataset.orderId = order.order_id;
 
-            // Determinar clases visuales según criticidad del tiempo
-            let borderStyle = "border-slate-700";
-            let timerColor = "text-emerald-400";
-            let statusBadge = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-            let statusText = "Nuevo";
+            // Header Metadata
+            card.querySelector('.kds-order-name').textContent = order.order;
+            card.querySelector('.kds-order-channel-badge').textContent = order.channel || 'Local';
+            card.querySelector('.kds-order-pcount').textContent = order.p_count || order.people.length;
 
-            if (isDelayed) {
-                borderStyle = "border-2 border-rose-500 shadow-rose-950/20";
-                timerColor = "text-rose-400 animate-pulse";
-                statusBadge = "bg-rose-500/20 text-rose-300 border-rose-500/30";
-                statusText = "Retrasado";
-            } else if (isWarning) {
-                borderStyle = "border border-amber-500/50 shadow-amber-950/20";
-                timerColor = "text-amber-400";
-                statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                statusText = "En Marcha";
-            }
+            const totalPendingItems = order.people.reduce((acc, p) => acc + p.items.length, 0);
+            card.querySelector('.kds-order-icount').textContent = totalPendingItems;
 
-            return `
-            <div id="ticket-${order.order_id}" class="w-80 bg-slate-800 ${borderStyle} rounded-2xl flex flex-col h-full shadow-2xl flex-shrink-0 overflow-hidden transition-all duration-300">
-                ${isDelayed ? `
-                    <div class="bg-rose-600 px-3 py-1 text-center font-bold text-[11px] text-white animate-pulse">
-                        ⚠️ MÁS DE 15 MINUTOS DE ESPERA
-                    </div>
-                ` : ''}
+            // Timer & Status
+            const timerEl = card.querySelector('.kds-order-timer');
+            timerEl.textContent = this.formatTime(order.running);
 
-                <!-- Header de Ticket -->
-                <div class="p-3 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black text-lg text-white">${order.table_name}</span>
-                            <span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded border border-slate-700 font-bold">#${order.folio}</span>
-                        </div>
-                        <p class="text-xs text-slate-400">Mesero: <strong class="text-slate-200">${order.waiter_name}</strong></p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-lg font-black ${timerColor} block">${order.elapsed_time_formatted}</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusBadge}">${statusText}</span>
-                    </div>
-                </div>
-
-                <!-- Lista de Platillos -->
-                <div class="flex-1 overflow-y-auto p-3 space-y-2">
-                    ${order.items.map((item, idx) => `
-                        <div onclick="BistroKdsApp.toggleItemDone(this)"
-                            class="p-2.5 bg-slate-900 border border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 transition group select-none ${item.completed ? 'item-done opacity-40 bg-emerald-950/30' : ''}">
-                            <div class="flex items-start justify-between">
-                                <span class="font-bold text-sm text-white group-[.item-done]:line-through group-[.item-done]:text-slate-500">
-                                    ${item.qty}x ${item.name}
-                                </span>
-                                <span class="text-[10px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded font-semibold">${item.target_person}</span>
-                            </div>
-                            
-                            ${item.notes || item.modifiers ? `
-                                <div class="mt-1 space-y-0.5 text-xs">
-                                    ${item.modifiers ? item.modifiers.map(m => `<p class="text-amber-400 font-semibold">⚡ ${m}</p>`).join('') : ''}
-                                    ${item.notes ? `<p class="text-rose-400 font-semibold">🚫 ${item.notes}</p>` : ''}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-
-                <!-- Footer de Ticket -->
-                <div class="p-3 bg-slate-900 border-t border-slate-700 space-y-2">
-                    <button onclick="BistroKdsApp.openOrderDetails(${order.order_id})"
-                        class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-1.5 rounded-lg text-xs border border-slate-700 transition">
-                        🔍 Ver Notas / Detalle
-                    </button>
-                    <button onclick="BistroKdsApp.completeTicket(${order.order_id})"
-                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-lg transition flex items-center justify-center space-x-1.5">
-                        <span>✅</span>
-                        <span>DESPACHAR ORDEN</span>
-                    </button>
-                </div>
-            </div>`;
-        }).join('');
-    },
-
-    /**
-     * Tacha o destacha un producto dentro del ticket de cocina
-     */
-    toggleItemDone: function (element) {
-        element.classList.toggle('item-done');
-        element.classList.toggle('opacity-40');
-        element.classList.toggle('bg-emerald-950/30');
-    },
-
-    /**
-     * Despacha una orden completa al nodo central
-     */
-    completeTicket: async function (orderId) {
-        const ticketEl = document.getElementById(`ticket-${orderId}`);
-
-        // Animación fluida inmediata antes de la respuesta del server
-        if (ticketEl) {
-            ticketEl.classList.add('scale-95', 'opacity-0');
-        }
-
-        try {
-            const res = await fetch('/api/kds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'complete_order',
-                    order_id: orderId
-                })
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                setTimeout(() => {
-                    this.loadOrders(); // Recarga y limpia la grilla
-                }, 300);
+            const remEl = card.querySelector('.kds-order-remaining');
+            if (order.remaining < 0) {
+                remEl.textContent = `${Math.ceil(Math.abs(order.remaining / 60))} min`;
+                remEl.className = 'kds-order-remaining text-[14px] font-mono font-bold text-rose-600';
             } else {
-                // Si falla el servidor, revertimos la animación
-                if (ticketEl) ticketEl.classList.remove('scale-95', 'opacity-0');
-                alert("Error al despachar la orden. Intente nuevamente.");
+                remEl.textContent = `${Math.ceil(order.remaining / 60)} min`;
+                remEl.className = 'kds-order-remaining text-[14px] font-mono font-bold text-emerald-600';
             }
-        } catch (err) {
-            console.error("[KDS] Error al despachar orden:", err);
-            if (ticketEl) ticketEl.classList.remove('scale-95', 'opacity-0');
-        }
+
+            // Bind Swipe Header Orden
+            const orderHeader = card.querySelector('.kds-order-header');
+            this.bindSwipeEvent(orderHeader, (dir) => this.markOrder(order.order_id, dir));
+
+            // Render Subtarjetas Personas
+            const body = card.querySelector('.kds-order-body');
+            order.people.forEach(person => {
+                const personEl = this.createPersonElement(order.order_id, person);
+                body.appendChild(personEl);
+            });
+
+            // Acciones de Confirmación
+            const btnCancel = card.querySelector('.btn-cancel-marked');
+            const btnRelease = card.querySelector('.btn-release-marked');
+
+            btnCancel.onclick = () => this.executeActionOnMarked(order.order_id, 'cancel');
+            btnRelease.onclick = () => this.executeActionOnMarked(order.order_id, 'release');
+
+            container.appendChild(clone);
+            this.updateActionToolbar(order.order_id);
+        });
     },
 
-    /**
-     * Filtra los tickets por estación (Calientes, Fríos, Bar)
-     */
-    filterStation: function (station) {
-        this.activeFilter = station;
-        const buttons = ['all', 'cocina', 'fria', 'bar'];
+    createPersonElement: function (orderId, person) {
+        const div = document.createElement('div');
+        div.className = 'kds-person-block bg-slate-900/90 border border-slate-700/80 rounded-xl p-2 space-y-1.5';
+        div.dataset.personId = person.p_id;
 
-        buttons.forEach(b => {
-            const btn = document.getElementById(`btn-filter-${b}`);
-            if (btn) {
-                btn.className = 'px-3 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition';
-            }
+        const header = document.createElement('div');
+        header.className = 'kds-person-header flex justify-between items-center text-xs pb-1 border-b border-slate-800 cursor-grab relative overflow-hidden select-none';
+        header.innerHTML = `
+            <div class="swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10 flex items-center justify-between px-2 text-[10px] font-bold text-white"></div>
+            <span class="font-black text-indigo-300 z-20">${person.p_id === 0 ? '🍽️ Centro' : '👤 Persona ' + person.p_id}</span>
+            <span class="text-[10px] font-mono text-slate-400 z-20">${person.items.length} ítems</span>
+        `;
+
+        this.bindSwipeEvent(header, (dir) => this.markPerson(orderId, person.p_id, dir));
+        div.appendChild(header);
+
+        const itemsBox = document.createElement('div');
+        itemsBox.className = 'space-y-1.5';
+
+        person.items.forEach(item => {
+            const itemEl = this.createItemElement(orderId, item);
+            itemsBox.appendChild(itemEl);
         });
 
-        const activeBtn = document.getElementById(`btn-filter-${station}`);
-        if (activeBtn) {
-            activeBtn.className = 'px-3 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow';
-        }
+        div.appendChild(itemsBox);
+        return div;
+    },
 
-        this.loadOrders();
+    createItemElement: function (orderId, item) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'kds-item-card p-2 bg-slate-800 rounded-lg text-xs border border-slate-700 relative overflow-hidden cursor-grab select-none transition-all';
+        itemDiv.dataset.itemId = item.item_id;
+
+        const markState = this.markedItems[orderId]?.[item.item_id];
+        let markBgClass = '';
+        if (markState === 'release') markBgClass = 'border-emerald-500 bg-emerald-950/40';
+        if (markState === 'cancel') markBgClass = 'border-rose-500 bg-rose-950/40';
+
+        if (markBgClass) itemDiv.className += ` ${markBgClass}`;
+
+        const formattedTime = `${Math.ceil(Math.abs(item.remaining / 60))} min`;
+        const timeClass = item.remaining < 0 ? 'text-rose-400 font-bold' : 'text-emerald-400';
+
+        itemDiv.innerHTML = `
+            <div class="swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10 flex items-center justify-between px-2 font-bold text-[10px] text-white"></div>
+            <div class="flex justify-between items-start font-bold text-white z-20 relative">
+                <span>${item.quantity}x ${item.name}</span>
+                <span class="kds-item-timer font-mono text-end text-[10px] ${timeClass}">${formattedTime}</span>
+            </div>
+            ${(item.modifiers || []).map(m => `<div class="text-[11px] text-amber-400 pl-2 z-20 relative">• ${m}</div>`).join('')}
+            ${item.notes ? `<div class="text-[10px] text-amber-300 italic mt-0.5 z-20 relative">📝 ${item.notes}</div>` : ''}
+        `;
+
+        this.bindSwipeEvent(itemDiv, (dir) => this.markItem(orderId, item.item_id, dir));
+        return itemDiv;
+    },
+
+    // ==========================================
+    // ACTUALIZACIÓN DE DOM REPOSITORIO DE TIMERS
+    // ==========================================
+    updateDomTimers: function () {
+        this.orders.forEach(order => {
+            const card = document.querySelector(`.kds-order-card[data-order-id="${order.order_id}"]`);
+            if (!card) return;
+
+            // 1. Timers a nivel Orden
+            const timerEl = card.querySelector('.kds-order-timer');
+            if (timerEl) timerEl.textContent = this.formatTime(order.running);
+
+            const remEl = card.querySelector('.kds-order-remaining');
+            if (remEl) {
+                remEl.textContent = `${Math.ceil(Math.abs(order.remaining / 60))} min`;
+                remEl.className = `kds-order-remaining text-[14px] font-mono font-bold ${order.remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`;
+            }
+
+            // 2. Timers a nivel de Ítem Individual
+            order.people.forEach(person => {
+                const personBlock = card.querySelector(`.kds-person-block[data-person-id="${person.p_id}"]`);
+                if (!personBlock) return;
+
+                person.items.forEach(item => {
+                    const itemCard = personBlock.querySelector(`.kds-item-card[data-item-id="${item.item_id}"]`);
+                    if (!itemCard) return;
+
+                    const iTimer = itemCard.querySelector('.kds-item-timer');
+                    if (iTimer) {
+                        iTimer.textContent = `${Math.ceil(Math.abs(item.remaining / 60))} min`;
+                        iTimer.className = `kds-item-timer font-mono text-end text-[10px] ${item.remaining < 0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}`;
+                    }
+                });
+            });
+        });
     },
 
     /**
-     * Muestra modal con detalles especiales
+     * Verifica si existen cambios en la BD desde la transmisión SSE / Polling
+     * Fuerza renderizado solo si el usuario no tiene selección activa.
      */
-    openOrderDetails: function (orderId) {
+    checkAndRenderOnStream: function () {
+        const latestHash = (IxeaData.timestamps && IxeaData.timestamps['bistro-kds'])
+            ? IxeaData.timestamps['bistro-kds']['get-orders']
+            : null;
+
+        if (latestHash && latestHash !== this.orderHash) {
+            // Si el usuario tiene ítems marcados o ya hay un contador en marcha, ignoramos la activación
+            if (this.hasUserInteractions() || this.autoRender !== null) {
+                return;
+            }
+            // Iniciar la cuenta regresiva visual
+            this.startAutoRender(latestHash, 3);
+        }
+    },
+
+    /**
+     * Comprueba si el usuario tiene alguna selección activa en cualquier comanda.
+     */
+    hasUserInteractions: function () {
+        if (!this.markedItems) return false;
+        return Object.keys(this.markedItems).some(orderId => {
+            const marks = this.markedItems[orderId];
+            return marks && typeof marks === 'object' && Object.keys(marks).length > 0;
+        });
+    },
+
+    /**
+     * Inicia una cuenta regresiva para el renderizado automático con badge en el header.
+     */
+    startAutoRender: function (targetHash, seconds = 3) {
+        this.cancelAutoRender();
+
+        this.countdown = seconds;
+        this.updateCountdown();
+
+        this.autoRender = setInterval(() => {
+            if (this.hasUserInteractions()) {
+                this.cancelAutoRender();
+                return;
+            }
+
+            this.countdown--;
+            this.updateCountdown();
+            // 
+            if (this.countdown <= 0) {
+                this.cancelAutoRender();
+                this.orderHash = targetHash;
+                this.render();
+            }
+        }, 1000);
+    },
+
+    /**
+     * Cancela la cuenta regresiva y oculta el indicador del header.
+     */
+    cancelAutoRender: function () {
+        if (this.autoRender !== null) {
+            clearInterval(this.autoRender);
+            this.autoRender = null;
+        }
+        this.countdown = 0;
+        this.updateCountdown();
+    },
+
+    /**
+     * Muestra u oculta el badge de actualización en el header.
+     */
+    updateCountdown: function () {
+        let container = document.getElementById('kds-sync-countdown');
+
+        if (this.countdown > 0) {
+            if (!container) return;
+            container.className = 'flex items-center gap-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold animate-pulse';
+            container.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> Actualizando en ${this.countdown}s...`;
+        } else if (container) {
+            container.innerHTML = '';
+            container.className = 'hidden';
+        }
+    },
+
+    // ==========================================
+    // GESTIÓN DE GESTOS SWIPE (ADR-013)
+    // ==========================================
+    bindSwipeEvent: function (element, onSwipe) {
+        let startX = 0;
+        let isSwiping = false;
+        const indicator = element.querySelector('.swipe-indicator');
+
+        const handleStart = (e) => {
+            this.cancelAutoRender();
+            startX = e.touches ? e.touches[0].clientX : e.clientX;
+            isSwiping = true;
+        };
+
+        const handleMove = (e) => {
+            if (!isSwiping) return;
+            const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+            const diffX = currentX - startX;
+
+            if (indicator) {
+                if (diffX > 20) {
+                    indicator.textContent = '🚀 LIBERAR';
+                    indicator.className = 'swipe-indicator absolute inset-0 bg-emerald-600/80 z-10 flex items-center justify-start pl-3 font-bold text-xs text-white';
+                } else if (diffX < -20) {
+                    indicator.textContent = '🗑️ CANCELAR';
+                    indicator.className = 'swipe-indicator absolute inset-0 bg-rose-600/80 z-10 flex items-center justify-end pr-3 font-bold text-xs text-white';
+                } else {
+                    indicator.className = 'swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10';
+                    indicator.textContent = '';
+                }
+            }
+        };
+
+        const handleEnd = (e) => {
+            if (!isSwiping) return;
+            isSwiping = false;
+            const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const diffX = endX - startX;
+
+            if (indicator) {
+                indicator.className = 'swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10';
+                indicator.textContent = '';
+            }
+
+            if (diffX > 60) {
+                onSwipe('right');
+            } else if (diffX < -60) {
+                onSwipe('left');
+            }
+        };
+
+        element.addEventListener('touchstart', handleStart, { passive: true });
+        element.addEventListener('touchmove', handleMove, { passive: true });
+        element.addEventListener('touchend', handleEnd);
+        element.addEventListener('mousedown', handleStart);
+        element.addEventListener('mousemove', handleMove);
+        element.addEventListener('mouseup', handleEnd);
+    },
+
+    // Lógica de marcado multinivel
+    markItem: function (orderId, itemId, direction) {
+        if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
+        const current = this.markedItems[orderId][itemId];
+        const target = direction === 'right' ? 'release' : 'cancel';
+
+        if (current === target) {
+            delete this.markedItems[orderId][itemId];
+        } else {
+            this.markedItems[orderId][itemId] = target;
+        }
+
+        this.render();
+    },
+
+    markPerson: function (orderId, personId, direction) {
+        const order = this.orders.find(o => o.order_id === orderId);
+        if (!order) return;
+        const person = order.people.find(p => p.p_id === personId);
+        if (!person) return;
+
+        if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
+        const target = direction === 'right' ? 'release' : 'cancel';
+
+        person.items.forEach(item => {
+            this.markedItems[orderId][item.item_id] = target;
+        });
+
+        this.render();
+    },
+
+    markOrder: function (orderId, direction) {
         const order = this.orders.find(o => o.order_id === orderId);
         if (!order) return;
 
-        document.getElementById('modal-order-title').innerText = `${order.table_name} — Comanda #${order.folio}`;
-        document.getElementById('modal-order-time').innerText = `Tiempo transcurrido: ${order.elapsed_time_formatted}`;
-        document.getElementById('modal-waiter-name').innerText = order.waiter_name;
-        document.getElementById('modal-order-notes').innerText = order.general_notes || 'Sin notas especiales.';
+        if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
+        const target = direction === 'right' ? 'release' : 'cancel';
 
-        this.openModal('modal-kds-detail');
+        order.people.forEach(p => {
+            p.items.forEach(item => {
+                this.markedItems[orderId][item.item_id] = target;
+            });
+        });
+
+        this.render();
     },
 
-    /**
-     * Métricas de tiempo de cocina
-     */
-    updateMetrics: function (metrics) {
-        if (!metrics) return;
-        const avgEl = document.getElementById('kds-avg-time');
-        if (avgEl) {
-            avgEl.innerText = metrics.avg_preparation_time || '0 min';
+    updateActionToolbar: function (orderId) {
+        const card = document.querySelector(`.kds-order-card[data-order-id="${orderId}"]`);
+        if (!card) return;
+
+        const toolbar = card.querySelector('.kds-order-actions-bar');
+        const summary = card.querySelector('.kds-actions-summary');
+        const orderMarks = this.markedItems[orderId] || {};
+        const count = Object.keys(orderMarks).length;
+
+        if (count > 0) {
+            toolbar.classList.remove('hidden');
+            summary.textContent = `${count} marcado(s)`;
+        } else {
+            toolbar.classList.add('hidden');
         }
     },
 
-    openModal: function (id) {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('hidden');
-    },
+    executeActionOnMarked: async function (orderId, action) {
+        const orderMarks = this.markedItems[orderId] || {};
+        const itemIds = Object.keys(orderMarks).filter(id => orderMarks[id] === action);
 
-    closeModal: function (id) {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
+        if (itemIds.length === 0) {
+            IxeaComponents.showAlert({ text: 'No hay ítems marcados para esta acción', icon: 'info' });
+            return;
+        }
+
+        try {
+            IxeaComponents.showLoading({ text: action === 'release' ? 'Liberando ítems...' : 'Cancelando ítems...' });
+
+            const endpoint = action === 'release' ? '/api/v1/bistro-kds/release-items' : '/api/v1/bistro-kds/cancel-items';
+            const res = await IxeaBridge.post(endpoint, {
+                order_id: orderId,
+                item_ids: itemIds
+            });
+
+            IxeaComponents.hideLoading();
+
+            if (res.success) {
+                delete this.markedItems[orderId];
+                IxeaComponents.showAlert({ text: 'Operación realizada exitosamente', icon: 'success', timer: 1200 });
+                this.fetchOrders();
+            } else {
+                throw new Error(res.message);
+            }
+        } catch (err) {
+            IxeaComponents.hideLoading();
+            IxeaComponents.showAlert({ text: err.message || 'Error al procesar acción', icon: 'error' });
+        }
     }
 };
