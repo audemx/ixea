@@ -20,13 +20,13 @@ $viewsPath = dirname(__DIR__);
                 ?>
             </div>
             <ul class="dropdown-menu shadow border-0 mt-2">
-                <li><a class="dropdown-item small" href="#"><i class="bi bi-info-circle me-2"></i>Acerca de IXEA OS</a></li>
+                <li><a class="dropdown-item small" href="https://ixea.mx/about/eros" target="_blank" rel="noopener noreferrer"><i class="bi bi-info-circle me-2"></i>Acerca de IXEA EROS</a></li>
                 <li><a class="dropdown-item small" href="#" onclick="alert('Configuración')"><i class="bi bi-gear-fill me-2"></i>Ajustes del Sistema</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <a class="dropdown-item small text-sfred"
                         style="cursor: pointer;"
-                        onclick="localStorage.clear(); window.location.href='/eros/logout';">
+                        onclick="localStorage.clear(); window.location.href='/logout';">
                         <i class="bi bi-power me-2"></i>Cerrar Sesión
                     </a>
                 </li>
@@ -83,7 +83,7 @@ $viewsPath = dirname(__DIR__);
                 <div>
                     <i class="bi bi-person-vcard fs-3 text-sfblue"></i>
                 </div>
-                <div class="fw-bold"><?= htmlspecialchars($currentUser['userName']); ?></div>
+                <div class="fw-bold"><?= htmlspecialchars($currentUser['fullName']); ?></div>
                 <div class="badge text-white small text-truncate max-w-100"><?= htmlspecialchars($currentUser['userEmail']); ?></div>
                 
                 <?php if ($isGmailConnected): ?>

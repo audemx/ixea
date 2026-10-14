@@ -139,3 +139,34 @@
 ### [2026-09-18 18:45] `feat(frontend)`: Optimización en la lógica de seguridad y permisos.
 * IxeaComponents contiene openModal('auth') lanza modal de autentificación.
 * Ajustar parametros de IxeaBouncer: action, permission, para que se revisen permisos específicos.
+
+### [2026-09-26 20:45] `feat(infra)`: Aprovisionamiento de base de datos y prueba en nube.
+* Se estableció base de datos `ixea_central` para gestión central de ixea.
+* Se integró tabla `tenant` para unidades de negocio. 
+* Se levantó prueba de sistema en nube.
+* Nueva inicialización completa: `php src/build.php bistro tenant_db`.
+
+### [2026-10-01 18:00] `feat(infra)`: Refactorización de microservicios.
+* Se centralizó la configuración de puertos de microservicios en `os-kernel.js`.
+* Se introdujo `ixea-server.local` como host local mDNS.
+* Se estandarizaron rutas de comunicación con el formato `servicio/endpoint`.
+* Se integró control de timeouts y gestión de errores específica por microservicio.
+* Se eliminó dependencia de variables de entorno y localStorage para el host local.
+* Se eliminó puerto dinámico por servicio y se asignó un puerto fijo para cada servicio.
+* Se optimizó la lógica de impresión para usar `route: 'print-ticket/bill'`.
+
+### [2026-10-01 18:30] `feat(infra)`: Implementación de microservicios `dev/local_server`.
+* Iniciar servicio `npm init -y`.
+* Instalación de dependencias: `npm install express cors dotenv axios escpos escpos-network escpos-usb`.
+* Creación de script `src/ixea_local_server/server.js`.
+
+###
+* Instalar mkcert `brew install mkcert` y `mkcert -install` en mac, en linux `sudo apt-get install libnss3-tools` y `mkcert -install`, en windows `choco install mkcert` y `mkcert -install` (ya viene comandado en `ixea_local_service.ps1`).
+* Generar certificados locales:
+  * En mac: `cd /ixea_local_service` y `mkcert localhost 127.0.0.1 192.168.1.200 local.ixea.mx`.
+  * En windows: `cd C:\ixea_local_server` y `.\mkcert.exe -key-file "localhost-key.pem" -cert-file "localhost.pem" localhost 127.0.0.1 192.168.1.200 local.ixea.mx`
+* Buscar certificado raíz: `mkcert -CAROOT`.
+* Para acciones de servicios locales en powershell:
+  * Abrir powershell como administrador.
+  * Para reiniciar servicios: `node "$env:AppData\npm\node_modules\pm2\bin\pm2" restart ixea-print-service`.
+  * Para ver logs: `node "$env:AppData\npm\node_modules\pm2\bin\pm2" logs ixea-print-service`.

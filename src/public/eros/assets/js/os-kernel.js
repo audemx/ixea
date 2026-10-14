@@ -118,6 +118,122 @@ const IxeaKernel = {
         if (clockDetail) {
             clockDetail.innerText = now.toLocaleTimeString();
         }
+    },
+
+    testLocalConnection: async function () {
+        const btnTest = document.getElementById('menu-test-connection');
+        if (btnTest) btnTest.disabled = true;
+
+        const localHost = 'local.ixea.mx';
+        const port = 9100;
+        const pingUrl = `https://${localHost}:${port}/ping`;
+
+        console.log(`%c[Diagnóstico] Probando conexión directa a: ${pingUrl}`, 'color: #00ffff');
+
+        try {
+            const startTime = performance.now();
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            const response = await fetch(pingUrl, {
+                method: 'GET',
+                mode: 'cors',
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+            const latency = Math.round(performance.now() - startTime);
+
+            if (!response.ok) {
+                throw new Error(`Servidor respondió HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.success) {
+                console.log(`%c[Diagnóstico ÉXITO] Conexión local establecida en ${latency} ms`, 'color: #00ff00', data);
+
+                // Actualizar indicador de latencia web/local en el menú si lo deseas
+                const latencyEl = document.getElementById('health-ms');
+                if (latencyEl) latencyEl.innerText = `${latency} ms`;
+
+                // Cambiar color del indicador principal a verde
+                const mainIndicator = document.getElementById('status-indicator');
+                if (mainIndicator) mainIndicator.className = 'bi bi-circle-fill text-success';
+
+                IxeaComponents.showAlert({
+                    title: 'Conexión Exitosa',
+                    text: `Servidor local de impresión alcanzado correctamente en ${latency} ms.`,
+                    icon: 'success'
+                });
+            }
+        } catch (error) {
+            console.error(`%c[Diagnóstico ERROR]:`, 'color: #ff0000', error.message);
+
+            // Cambiar color del indicador principal a rojo
+            const mainIndicator = document.getElementById('status-indicator');
+            if (mainIndicator) mainIndicator.className = 'bi bi-circle-fill text-danger';
+
+            IxeaComponents.showAlert({
+                title: 'Sin Conexión Local',
+                text: `No se pudo comunicar con el servidor de impresión (${localHost}:${port}).\n\nDetalle: ${error.message}`,
+                icon: 'error'
+            });
+        } finally {
+            if (btnTest) btnTest.disabled = false;
+        }
+    },
+
+    testLocalPrint: async function () {
+        const btnPrint = document.getElementById('menu-test-print');
+        if (btnPrint) btnPrint.disabled = true;
+
+        console.log(`%c[Diagnóstico] Enviando ticket de prueba a la impresora...`, 'color: #00ffff');
+
+        const testTicketData = {
+            printerType: 'usb',
+            ticket: {
+                folio: 'DIAG-' + Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toLocaleString('es-MX'),
+                table_name: 'CAJA / DIAGNOSTICO',
+                user_name: 'Soporte Técnico',
+                customer_name: 'Prueba de Sistema',
+                type: 'global',
+                subtotal: 0.00,
+                discount: 0.00,
+                iva: 0.00,
+                total: 0.00,
+                bills: [
+                    {
+                        bill_index: 0,
+                        target: 'Diagnóstico',
+                        items: [
+                            { name: 'PRUEBA DE IMPRESION OK', qty: 1, price: 0, subtotal: 0 }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        try {
+            // Usando tu función sendToLocalServer para respetar la seguridad, fichas y tokens
+            const response = await IxeaBridge.sendToLocalServer('print-ticket/bill', testTicketData);
+
+            if (response && response.success) {
+                console.log(`%c[Diagnóstico ÉXITO] Ticket de prueba impreso correctamente.`, 'color: #00ff00');
+
+                IxeaComponents.showAlert({
+                    title: 'Impresión Exitosa',
+                    text: 'El ticket de prueba se envió a la cola de Windows correctamente.',
+                    icon: 'success'
+                });
+            }
+        } catch (error) {
+            console.error(`%c[Diagnóstico ERROR IMPRESIÓN]:`, 'color: #ff0000', error.message);
+        } finally {
+            if (btnPrint) btnPrint.disabled = false;
+        }
     }
 };
 
@@ -488,6 +604,15 @@ const IxeaBridge = {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
     },
+    /**
+     * Diccionario de Microservicios Locales
+     */
+    localServices: {
+        'print-ticket': 9100,
+        'read-biometric': 9200,
+        'pin-pad': 9300,
+        'open-box': 9400
+    },
 
     /** Obtiene dinámicamente el Token CSRF desde el meta tag */
     _getCsrfToken: function () {
@@ -643,6 +768,68 @@ const IxeaBridge = {
                 showConfirmButton: false,
                 timer: 3000
             });
+        }
+    },
+
+    /**
+     * Envía peticiones a microservicios locales mediante rutas semánticas
+     * @param {string} route - Formato: 'servicio/endpoint' (Ej: 'print-ticket/bill', 'read-biometric/checkin')
+     * @param {object} payload - Datos a enviar
+     * @param {number} timeoutMs - Tiempo límite de espera en ms (por defecto 4000ms)
+     */
+    sendToLocalServer: async function (route, payload = {}, timeoutMs = 4000) {
+        // 1. Descomponer la ruta enviada (Ej: 'print-ticket/bill' -> ['print-ticket', 'bill'])
+        const parts = route.replace(/^\/+|\/+$/g, '').split('/');
+        const serviceKey = parts[0];
+        const endpoint = parts.slice(1).join('/');
+
+        // 2. Resolver puerto desde el diccionario
+        const port = this.localServices[serviceKey];
+        if (!port) {
+            const validServices = Object.keys(this.localServices).join(', ');
+            throw new Error(`[IxeaBridge] Servicio local '${serviceKey}' no reconocido. Servicios válidos: [${validServices}]`);
+        }
+
+        // 3. Obtener Host/IP (Para producción usar local.ixea.mx y https)
+        const localHost = 'local.ixea.mx';
+        const url = `https://${localHost}:${port}/${endpoint}`;
+        console.log(url);
+        // 4. AbortController para manejar timeouts
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        payload.printerType = 'usb'; // 'usb', 'network', 'console'
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Local-Token': 'IxeaDevLocal2026.'
+                },
+                //targetAddressSpace: 'local', // Usar solo en producción
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`[Microservicio ${serviceKey} HTTP ${response.status}] ${response.statusText}`);
+            }
+
+            return await response.json();
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            if (error.name === 'AbortError') {
+                console.warn(`[IxeaBridge] Timeout conectando con microservicio '${serviceKey}' en (${url})`);
+                throw new Error(`El servicio local '${serviceKey}' no respondió dentro del tiempo límite.`);
+            }
+
+            console.error(`[IxeaBridge LocalServer Error]:`, error.message);
+            throw error;
         }
     }
 };
@@ -811,7 +998,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Iniciar intro
     IxeaUI.init();
 
-    console.log("Ixea EROS: Boot Completed.");
+    setTimeout(() => {
+        console.log("Ixea EROS: Boot Completed.");
+    }, 5000);
 });
 
 /**

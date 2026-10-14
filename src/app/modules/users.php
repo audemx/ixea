@@ -1,158 +1,142 @@
 <?php
 /** modules/users/users.php **/
 ?>
-<div class="container-fluid h-100 d-flex flex-column py-3 px-4">
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm border-start border-primary border-4">
-                <div class="card-body py-2">
-                    <h6 class="small text-uppercase fw-bold text-muted mb-1">Total Usuarios</h6>
-                    <div class="h4 mb-0 fw-bold" id="count_total_users">0</div>
-                </div>
-            </div>
+<div class="w-full h-full p-4 flex flex-col gap-4">
+    <!-- Tarjetas Métricas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Total Usuarios -->
+        <div class="bg-slate-700 border-l-4 border-blue-500 rounded-2xl p-4 shadow-md border-t border-r border-b border-slate-700 flex items-center justify-between">
+            <h6 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Usuarios</h6>
+            <div class="text-2xl font-extrabold text-white" id="users-count-total">0</div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm border-start border-sfgreen border-4">
-                <div class="card-body py-2">
-                    <h6 class="small text-uppercase fw-bold text-sfgreen mb-1">Activos</h6>
-                    <div class="h4 mb-0 fw-bold" id="count_active">0</div>
-                </div>
-            </div>
+
+        <!-- Activos -->
+        <div class="bg-slate-700 border-l-4 border-emerald-500 rounded-2xl p-4 shadow-md border-t border-r border-b border-slate-700 flex items-center justify-between">
+            <h6 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Activos</h6>
+            <div class="text-2xl font-extrabold text-white" id="users-count-active">0</div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm border-start border-sfyellow border-4">
-                <div class="card-body py-2">
-                    <h6 class="small text-uppercase fw-bold text-sfyellow mb-1">Sin Biometría</h6>
-                    <div class="h4 mb-0 fw-bold" id="count_no_face">0</div>
-                </div>
-            </div>
+
+        <!-- Sin Huella Digital -->
+        <div class="bg-slate-700 border-l-4 border-amber-500 rounded-2xl p-4 shadow-md border-t border-r border-b border-slate-700 flex items-center justify-between">
+            <h6 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Sin Huella</h6>
+            <div class="text-2xl font-extrabold text-white" id="users-count-fingerprint">0</div>
         </div>
     </div>
 
-    <div class="flex-grow-1 bg-white bg-opacity-75 backdrop-blur rounded-4 shadow-sm border d-flex flex-column overflow-hidden">
-        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-            <h5 class="m-0 fw-bold text-secondary"><i class="bi bi-people me-2"></i>Gestión de Personal</h5>
-            <div class="d-flex gap-2">
-                <input type="text" class="form-control form-control-sm border-0 shadow-sm" style="width:250px" 
-                       placeholder="Buscar usuario..." onkeyup="UsersApp.filterUsers(this.value)">
-                <button class="btn btn-sm btn-primary px-3" onclick="UsersApp.openCreateModal()">
-                    <i class="bi bi-person-plus-fill me-1"></i> Nuevo
+    <!-- Contenedor Principal / Tabla -->
+    <div class="flex-1 bg-slate-700 border border-slate-700 rounded-2xl shadow-lg flex flex-col overflow-hidden">
+        <!-- Header de la sección -->
+        <div class="p-4 border-b border-slate-700 bg-slate-700/80 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <h5 class="m-0 font-bold text-white text-lg flex items-center gap-2">
+                <i class="bi bi-people text-blue-400"></i>Gestión de Personal
+            </h5>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <input type="text" 
+                       id="users-input-search"
+                       class="w-full sm:w-64 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500" 
+                       placeholder="Buscar usuario..." 
+                       onkeyup="UsersApp.filterUsers(this.value)">
+                <button class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2 shrink-0 shadow-md" 
+                        id="users-button-create"
+                        onclick="UsersApp.openCreateUser()">
+                    <i class="bi bi-person-plus-fill"></i> Nuevo
                 </button>
             </div>
         </div>
 
-        <div class="p-0 overflow-auto">
-            <table id="tablaUsuarios" class="table table-hover align-middle mb-0">
-                <thead class="bg-light small text-uppercase text-muted">
+        <!-- Tabla -->
+        <div class="overflow-x-auto flex-1">
+            <table id="users-table" class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-700">
                     <tr>
-                        <th class="ps-3">Nombre / Identificador</th>
-                        <th>Rol / Puesto</th>
-                        <th class="text-center">Estatus</th>
-                        <th class="text-center">Biometría</th>
-                        <th class="text-end pe-3">Acciones</th>
+                        <th class="py-3 px-4">Nombre / Identificador</th>
+                        <th class="py-3 px-4 text-center">Rol / Puesto</th>
+                        <th class="py-3 px-4 text-center">Estatus</th>
+                        <th class="py-3 px-4 text-center">Biometría</th>
+                        <th class="py-3 px-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="small border-top-0">
-                    </tbody>
+                <tbody class="divide-y divide-slate-700/50" id="users-table-body">
+                </tbody>
             </table>
         </div>
     </div>
+
+    <!-- Tag para el modal -->
+    <div id="users-modal"></div>
 </div>
 
-<template id="tpl-user-form">
-    <div class="modal-header bg-light p-1">
-    </div>
+<!-- ==================== TEMPLATES MODALES ==================== -->
 
-    <div class="modal-body px-4 py-2 bg-light">
-        <form id="formUsuario" autocomplete="off">
-            <input type="hidden" name="user_id" id="userId">
-            <input type="hidden" id="faceDescriptorInput" name="face_descriptor">
+<!-- Modal: Crear / Editar Usuario (uso: form/edit) -->
+<template id="users-template-form">
+    <div class="flex flex-col w-full h-full max-h-[85vh] p-4 text-white overflow-y-auto">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-700 mb-4">
+            <h3 class="font-bold text-lg text-blue-400 flex items-center gap-2" id="users-form-title">
+                <i class="bi bi-person-gear"></i> Usuario
+            </h3>
+            <button class="text-slate-400 hover:text-white transition" onclick="IxeaComponents.closeModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form id="users-form" autocomplete="off" class="space-y-4">
+            <input type="hidden" name="user_id" id="users-field-id" >
             
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Nombre(s) *</label>
-                    <input type="text" name="first_name" class="form-control shadow-sm" required>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nombre(s) *</label>
+                    <input type="text" name="first_name" id="users-field-firstname" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500" required>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Apellidos</label>
-                    <input type="text" name="last_name" class="form-control shadow-sm">
-                </div>
-
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold text-secondary">RFC / ID *</label>
-                    <input type="text" name="tax_id" class="form-control shadow-sm" maxlength="20" required>
-                </div>
-                <div class="col-md-7">
-                    <label class="form-label small fw-bold text-secondary">Email *</label>
-                    <input type="email" name="email" id="emailField" class="form-control shadow-sm" required>
-                </div>
-
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold text-secondary">Contraseña</label>
-                    <input type="password" name="password" id="passwordField" class="form-control" placeholder="********">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold text-secondary">Rol *</label>
-                    <select id="sel_rol" name="role_id" class="form-select shadow-sm" required></select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary">PIN</label>
-                    <input type="text" name="auth_pin" class="form-control text-center shadow-sm" maxlength="4" placeholder="0000">
-                </div>
-
-                <div class="col-md-12">
-                    <label class="form-label small fw-bold text-secondary">Estado del Usuario</label>
-                    <select name="status" class="form-select shadow-sm">
-                        <option value="active">Activo</option>
-                        <option value="inactive">Inactivo</option>
-                        <option value="terminated">Baja</option>
-                    </select>
-                </div>
-
-                <div class="col-12 mt-4">
-                    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-                        <div class="card-body px-4 py-2 text-center">
-                            <h6 class="fw-bold text-primary mb-1"><i class="bi bi-person-bounding-box me-2"></i>Identidad Biométrica</h6>
-                            
-                            <div id="cameraBox" class="d-none mb-1 mx-auto rounded-4 overflow-hidden shadow" 
-                                 style="width:280px; height:210px; background:#000; position: relative;">
-                                
-                                <video id="videoElement" autoplay muted playsinline 
-                                       style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1);"></video>
-                                
-                                <canvas id="faceCanvas" width="280" height="210" 
-                                        style="position: absolute; top:0; left:0; z-index: 100; pointer-events: none;"></canvas>
-                            </div>
-
-                            <div id="scanProgress" class="d-flex justify-content-center gap-2 mb-1">
-                                <span class="progress-step" id="step1"></span>
-                                <span class="progress-step" id="step2"></span>
-                                <span class="progress-step" id="step3"></span>
-                            </div>
-
-                            <div class="d-grid gap-2 d-md-block">
-                                <button type="button" id="users-btnStartCamera" class="btn btn-outline-dark rounded-pill px-4" onclick="UsersApp.startCamera()">
-                                    <i class="bi bi-camera-video me-2"></i>Iniciar Escaneo
-                                </button>
-                                <button type="button" id="users-btnStopCamera" class="btn btn-sfred text-white rounded-pill px-4 d-none" onclick="UsersApp.stopCamera()">
-                                    <i class="bi bi-camera-video me-2"></i>Detener
-                                </button>
-                                <button type="button" id="users-btnCaptureFace" class="btn btn-sfblue text-white rounded-pill px-4 d-none" onclick="UsersApp.captureFace()">
-                                    <i class="bi bi-camera-fill me-2"></i>Capturar (<span id="capCount">1</span>/3)
-                                </button>
-                            </div>
-
-                            <div id="faceMessage" class="small mt-2 fw-bold"></div>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Apellidos</label>
+                    <input type="text" name="last_name" id="users-field-lastname" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
-        </form>
-    </div>
 
-    <div class="modal-footer border-0 bg-white">
-        <button type="button" class="btn btn-dark rounded-pill px-5 fw-bold" onclick="UsersApp.saveUser()">
-            <i class="bi bi-check2-circle me-2"></i>Guardar Usuario
-        </button>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">RFC / ID</label>
+                    <input type="text" name="tax_id" id="users-field-taxid" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500" maxlength="20">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Rol *</label>
+                    <select id="users-field-role" name="role_id" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2.5 text-xs focus:outline-none focus:border-blue-500" required></select>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">PIN</label>
+                    <input type="text" name="auth_pin" id="users-field-pin" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-center text-white focus:outline-none focus:border-blue-500" maxlength="4" placeholder="0000">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div class="md:col-span-7">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
+                    <input type="email" name="email" id="users-field-email" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
+                    <input type="password" name="password" id="users-field-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="********">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Estado del Usuario</label>
+                <select name="status" id="users-field-status" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2.5 text-xs focus:outline-none focus:border-blue-500">
+                    <option value="active">Activo</option>
+                    <option value="suspended">Suspendido</option>
+                    <option value="archived">Baja</option>
+                </select>
+            </div>
+        </form>
+
+        <div class="flex space-x-2 pt-4 mt-auto border-t border-slate-700">
+            <button type="button" onclick="IxeaComponents.closeModal()" class="w-1/3 bg-slate-600 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-xs transition">
+                Cancelar
+            </button>
+            <button type="button" onclick="UsersApp.saveUser()" class="w-2/3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-2">
+                <i class="bi bi-check2-circle text-base"></i>Guardar Usuario
+            </button>
+        </div>
     </div>
 </template>

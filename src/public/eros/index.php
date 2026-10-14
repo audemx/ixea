@@ -10,19 +10,29 @@ use App\Core\Config;
 use App\Core\Security;
 use App\Database\Connection;
 
+// INICIALIZACIÓN GLOBAL DE LA BD CENTRAL Y ELOQUENT
 Config::init();
 Connection::boot();
 
-// 1. Limpieza de URI
+function ensureTenantConnection() {
+    if (!isset($_SESSION['tenant'])) {
+        header("Location: /login");
+        exit;
+    }
+    Connection::connectToTenant($_SESSION['tenant']);
+    return Security::authorize();
+}
+
+// Limpieza de URI
 $rawUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestUri = rtrim($rawUri, '/');
 if (empty($requestUri)) {
     $requestUri = '/';
 }
 
-// 2. ENRUTADOR DINÁMICO DE MÓDULOS (/modules/{code})
+// ENRUTADOR DINÁMICO DE MÓDULOS (/modules/{code})
 if (str_starts_with($requestUri, '/modules/')) {
-    $currentUser = Security::authorize(); // Validar sesión
+    $currentUser = ensureTenantConnection();
 
     // Extraemos el código del módulo (ej. "/modules/pos" -> "pos")
     $moduleCode = str_replace('/modules/', '', $requestUri);
@@ -40,9 +50,9 @@ if (str_starts_with($requestUri, '/modules/')) {
     }
 }
 
-// 3. ENRUTADOR DINÁMICO PARA API (/api/{version}/{modulo}/{accion})
+// ENRUTADOR DINÁMICO PARA API (/api/{version}/{modulo}/{accion})
 if (str_starts_with($requestUri, '/api/')) {
-    $currentUser = Security::authorize(); // Validar sesión o token
+    $currentUser = ensureTenantConnection();
 
     // Dividir la URI en partes: ["api", "{version}", "{module}", "{action}"]
     $parts = explode('/', trim($requestUri, '/'));
@@ -79,72 +89,58 @@ if (str_starts_with($requestUri, '/api/')) {
     exit;
 }
 
-// 4. Tabla de Enrutamiento
+// ENRUTADOR DINÁMICO DE DESCARGAS
+if (str_starts_with($requestUri, '/download/')) {
+    $currentUser = ensureTenantConnection();
+
+    // Extraemos el código de la descarga (ej. "/download/install.ps1" -> "install.ps1")
+    $downloadCode = str_replace('/download/', '', $requestUri);
+    
+    // Construimos la ruta física dentro de la carpeta privada /app/downloads/
+    $downloadPath = __DIR__ . '/../../app/downloads/' . $downloadCode;
+
+    if (file_exists($downloadPath)) {
+        // 1. Forzar la descarga indicando las cabeceras HTTP correctas
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . basename($downloadPath) . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($downloadPath));
+        
+        // Limpiar el búfer de salida para evitar corromper el archivo
+        flush();
+        readfile($downloadPath);
+        exit;
+    } else {
+        http_response_code(404);
+        echo "404 - Descarga no encontrada: " . htmlspecialchars($downloadCode);
+        exit;
+    }
+}
+
+// Tabla de Enrutamiento
 switch ($requestUri) {
 
-    // =========================================================================
-    // RUTAS PÚBLICAS
-    // =========================================================================
     case '/':
-    case '/eros':
     case '/login':
-    case '/eros/login':
         require_once __DIR__ . '/../../app/access/login.php';
         break;
 
     case '/login_handler':
-    case '/eros/login_handler':
         require_once __DIR__ . '/../../app/access/login_handler.php';
         break;
 
     case '/logout':
-    case '/eros/logout':
         require_once __DIR__ . '/../../app/access/logout.php';
         break;
 
-    // =========================================================================
-    // RUTAS PROTEGIDAS SEGÚN ROL
-    // =========================================================================
     case '/dashboard':
-    case '/eros/dashboard': // Roles 0 y 1 (SuperAdmin / Admin)
-        $currentUser = Security::authorize();
+        $currentUser = ensureTenantConnection();
         require_once __DIR__ . '/../../app/views/dashboard.php';
         break;
 
-    case '/till':
-    case '/eros/till': // Rol 2 (Caja / Till)
-        $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/till.php';
-        break;
-
-    case '/bistro-pos':
-    case '/eros/bistro-pos':
-    case '/modules/bistro-pos': // Rol 3 (Comandero / Vendedor)
-        $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/bistro-pos.php';
-        break;
-
-    case '/bistro-kds':
-    case '/eros/bistro-kds': // Rol 4 (Cocina)
-        $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/bistro-kds.php';
-        break;
-
-    case '/clients':
-    case '/eros/clients': // Rol 5 (Clientes)
-        $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/clients.php';
-        break;
-
-    case '/suppliers':
-    case '/eros/suppliers': // Rol 6 (Proveedores)
-        $currentUser = Security::authorize();
-        require_once __DIR__ . '/../../app/views/suppliers.php';
-        break;
-
-    // =========================================================================
-    // 404 NOT FOUND
-    // =========================================================================
     default:
         http_response_code(404);
         echo "404 - Página no encontrada: " . htmlspecialchars($rawUri);

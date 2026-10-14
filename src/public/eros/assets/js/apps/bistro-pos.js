@@ -2,20 +2,33 @@ window.BistroPosApp = {
     // ==========================================
     // Variables de Estado
     // ==========================================
+
+    // Global
     jsName: 'bistro-pos',
     isInitialized: false,
-    activeDraftItem: null,
-    currentUser: IxeaUser.userId,
-    currentCategory: null,
-    currentTable: null,
-    currentPerson: null,
-    categories: [],
-    menu: [],
-    modifiers: [],
-    tables: [],
-    cart: [],
-    personCount: 0,
-    swipeListeners: [],
+
+    // Estado
+    activeDraftItem: null, // Item activo en el carrito. Es un objeto con las propiedades: item_id, quantity, name, unit_price, subtotal, notes, modifiers
+    currentUser: IxeaUser.userId, // ID del usuario activo o mesero seleccionado.
+    currentCategory: null, // ID de la categoría seleccionada.
+    currentTable: null, // ID de la mesa seleccionada. Es -1 si es temporal.
+    tableName: null, // Nombre de la mesa seleccionada.
+    currentPerson: null, // Número de persona seleccionada.
+    currentChannel: null, // ID de canal seleccionado en modal de nueva orden.
+    currentArea: 'all', // 'all', ID de área, o 'temporal'. Indica el área a mostrar en el listado de mesas.
+    currentOrder: null, // ID de la orden activa que se está editando.
+
+    // Data
+    categories: [], // Array de categorías con formato {id, name, description, emoji, sort, status_id}
+    menu: [], // Array de platillos con formato {id, name, description, category_id, station_id, price, prep_time}
+    modifiers: [], // Array de modificadores con formato {id, name, description, price}
+    tables: [], // Array de mesas con formato {id, name, area_id, capacity, pos_x, pos_y, size, orientation, use_status_id, status_id}
+    cart: [], // Array de items en el carrito con formato: {item_id, quantity, name, unit_price, subtotal, notes, modifiers}
+    personCount: 0, // Número de personas en la orden.
+    swipeListeners: [], // Array de listeners de eventos de swipe.
+    areas: [], // Array de áreas con formato {id, name, description, emoji, sort, status_id}
+    orders: [], // Array de órdenes con formato {id, name, description, emoji, sort, status_id}
+
 
     // ==========================================
     // Funciones de Inicialización
@@ -30,10 +43,40 @@ window.BistroPosApp = {
         this.fetchModifiers({ forceSync: true });
         this.fetchCategories({ forceSync: true });
         this.fetchTables({ forceSync: true });
+        this.fetchAreas({ forceSync: true });
+        this.fetchOrders({ forceSync: true });
+    },
+
+    /** Menu de operaciones de la Pos */
+    renderAppActions: function (activeOrder) {
+        const menuActions = document.getElementById('menu-app-actions');
+        if (!menuActions) return;
+
+        // Si hay una orden activa, mostrar opciones de edición
+        if (activeOrder) {
+            menuActions.innerHTML = `
+                <div class="dropdown">
+                    <div class="menu-item cursor-pointer" data-bs-toggle="dropdown">Operaciones</div>
+                    <ul class="dropdown-menu shadow border-0 mt-2 bg-slate-800 text-white">
+                        <li>
+                            <a class="dropdown-item small cursor-pointer" onclick="BistroPosApp.editCurrentOrder(true)">
+                                <i class="bi bi-pencil me-2 text-sfgreen"></i>Editar Orden
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            `;
+        } else {
+            menuActions.innerHTML = '';
+        }
     },
 
     /**
      * Inicializa los listeners mediante delegación de eventos
+     * Si el usuario desliza el dedo hacia la izquierda más de 35px, se muestra el botón de eliminar
+     * Si el usuario desliza el dedo hacia la derecha menos de 35px, se oculta el botón de eliminar
+     * Si el usuario desliza hacia arriba o abajo más de 35px, domina el scroll.
+     * Si el usuario no mueve el dedo más de 35px en ninguna dirección, se abre el modal de modificación.
      */
     initCartSwipeListener: function () {
         const cartEl = document.getElementById('bistro-pos-cart');
@@ -41,12 +84,14 @@ window.BistroPosApp = {
 
         let activeItem = null;
         let startX = 0;
+        let startY = 0;
         let currentX = 0;
+        let currentY = 0;
         let isSwiping = false;
+        let hasMoved = false;
 
-        // 1. Definimos las funciones manejadoras (Handler functions)
         const handleStart = (e) => {
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const touch = e.touches ? e.touches[0] : e;
             const item = e.target.closest('.swipe-item');
             if (!item) return;
 
@@ -55,33 +100,54 @@ window.BistroPosApp = {
             }
 
             activeItem = item;
-            startX = clientX;
-            currentX = clientX;
+            startX = touch.clientX;
+            startY = touch.clientY;
+            currentX = touch.clientX;
+            currentY = touch.clientY;
             isSwiping = true;
+            hasMoved = false;
         };
 
         const handleMove = (e) => {
             if (!isSwiping || !activeItem) return;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            currentX = clientX;
+            const touch = e.touches ? e.touches[0] : e;
+            currentX = touch.clientX;
+            currentY = touch.clientY;
+
             const diffX = startX - currentX;
+            const diffY = Math.abs(startY - currentY);
+
+            // Si el movimiento vertical es mayor que el horizontal, el usuario está haciendo SCROLL
+            if (diffY > Math.abs(diffX) && diffY > 8) {
+                isSwiping = false;
+                activeItem.style.transform = 'translateX(0px)';
+                return;
+            }
+
+            // Marcar que hubo desplazamiento significativo (evita falsos clics)
+            if (Math.abs(diffX) > 8 || diffY > 8) {
+                hasMoved = true;
+            }
 
             if (diffX > 0 && diffX <= 70) {
                 activeItem.style.transform = `translateX(-${diffX}px)`;
             }
         };
 
-        const handleEnd = () => {
+        const handleEnd = (e) => {
             if (!isSwiping || !activeItem) return;
             isSwiping = false;
+
             const diffX = startX - currentX;
+            const diffY = Math.abs(startY - currentY);
 
             if (diffX > 35) {
                 activeItem.style.transform = 'translateX(-64px)';
-            } else if (diffX < -10 || diffX <= 35) {
+            } else {
                 activeItem.style.transform = 'translateX(0px)';
 
-                if (Math.abs(diffX) < 5) {
+                // Solo abre/modifica el ítem si NO hubo intención de scroll ni de swipe
+                if (!hasMoved && Math.abs(diffX) < 8 && diffY < 8) {
                     const index = parseInt(activeItem.dataset.index);
                     if (!isNaN(index)) {
                         this.modifyItem(index);
@@ -97,7 +163,6 @@ window.BistroPosApp = {
             }
         };
 
-        // 2. Guardamos las referencias en nuestro array swipeListeners
         this.swipeListeners = [
             { target: cartEl, type: 'touchstart', handler: handleStart, options: { passive: true } },
             { target: cartEl, type: 'touchmove', handler: handleMove, options: { passive: true } },
@@ -108,7 +173,6 @@ window.BistroPosApp = {
             { target: cartEl, type: 'mouseleave', handler: handleMouseLeave, options: false }
         ];
 
-        // 3. Adjuntamos los eventos
         this.swipeListeners.forEach(listener => {
             listener.target.addEventListener(listener.type, listener.handler, listener.options);
         });
@@ -162,9 +226,32 @@ window.BistroPosApp = {
             if ((res.changed || cacheOnly) && res.data) {
                 this.tables = res.data;
             }
-            this.renderTablesMap();
+            this.renderTables();
         } catch (err) {
             console.error("[POS] Error al obtener mesas:", err);
+        }
+    },
+
+    fetchAreas: async function ({ cacheOnly = false, forceSync = false } = {}) {
+        try {
+            const res = await IxeaData.get("bistro-pos", "get-areas", { cacheOnly, forceSync });
+            if (res.success && res.data) {
+                this.areas = res.data;
+                this.renderAreas();
+            }
+        } catch (err) {
+            console.error("[POS] Error al obtener áreas:", err);
+        }
+    },
+
+    fetchOrders: async function ({ cacheOnly = false, forceSync = false } = {}) {
+        try {
+            const res = await IxeaData.get("bistro-pos", "get-orders", { cacheOnly, forceSync });
+            if (res.success && res.data) {
+                this.orders = res.data;
+            }
+        } catch (err) {
+            console.error("[POS] Error al obtener órdenes:", err);
         }
     },
 
@@ -185,9 +272,45 @@ window.BistroPosApp = {
             }
         };
         IxeaComponents.openModal('auth', {
-            backdrop: 'md',
-            width: '80'
+            addClassModal: 'backdrop-blur-md',
+            addClass: 'w-80'
         });
+    },
+
+    // ==========================================
+    // Renderizado de Areas
+    // ==========================================
+    renderAreas: function () {
+        const container = document.getElementById('bistro-pos-areas');
+        if (!container) return;
+
+        container.innerHTML = `
+            <button onclick="BistroPosApp.selectArea('all')" class="px-2 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${this.currentArea === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">
+                Todas
+            </button>
+        `;
+
+        this.areas.forEach(area => {
+            const isActive = this.currentArea === area.id;
+            const btn = document.createElement('button');
+            btn.onclick = () => this.selectArea(area.id);
+            btn.className = `px-2 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}`;
+            btn.textContent = area.name;
+            container.appendChild(btn);
+        });
+
+        const temporalButton = document.createElement('button');
+        temporalButton.onclick = () => this.selectArea('temporal');
+        temporalButton.className = `px-2 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${this.currentArea === 'temporal' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-amber-400 border border-slate-700'}`;
+        temporalButton.textContent = 'Temporal';
+        container.appendChild(temporalButton);
+    },
+
+    /** Selecciona un área y renderiza el mapa */
+    selectArea: function (areaId = 'all') {
+        this.currentArea = areaId;
+        this.renderTables();
+        this.renderAreas();
     },
 
     // ==========================================
@@ -245,12 +368,30 @@ window.BistroPosApp = {
         }
     },
 
-    renderTablesMap: function () {
+    renderTables: function () {
         const template = document.getElementById('bistro-pos-template-table');
         const container = document.getElementById('bistro-pos-tables');
 
         container.innerHTML = '';
-        this.tables.forEach(table => {
+
+        const areaId = this.currentArea;
+        let filterTables = this.tables;
+        if (areaId === 'temporal') {
+            filterTables = this.orders.filter(order => order.table_id === -1);
+        } else if (areaId !== 'all') {
+            filterTables = this.tables.filter(table => table.area_id === areaId);
+        }
+
+        filterTables.forEach(table => {
+            let tableId = table.id;
+            let orderId = table.order_id;
+            if (areaId === 'temporal') {
+                tableId = -1;
+                orderId = table.id;
+            } else {
+                tableId = table.id;
+                orderId = table.order_id;
+            }
             // 1. Clonar el contenido del template (true asegura clonar los hijos)
             const clone = template.content.cloneNode(true);
 
@@ -262,7 +403,8 @@ window.BistroPosApp = {
 
             // 3. Rellenar los datos básicos
             nameSpan.textContent = table.name;
-            button.setAttribute('onclick', `BistroPosApp.selectTable(${table.id})`);
+            button.setAttribute('onclick', `BistroPosApp.selectTable(${tableId}, ${orderId ?? null})`); // Si la mesa no está abierta, no tiene orden. Por lo tanto es null
+            button.dataset.orderId = orderId ?? null;
 
             // 4. Aplicar la lógica condicional
             if (table.status === 'open') {
@@ -271,10 +413,10 @@ window.BistroPosApp = {
                 badgeSpan.textContent = 'Libre';
                 badgeSpan.classList.add('text-emerald-400', 'bg-emerald-500/10');
             } else if (table.status === 'pending') {
-                button.classList.add('border-indigo-500', 'hover:border-indigo-500', 'border-indigo-500/40');
+                button.classList.add('border-amber-500', 'hover:border-amber-500', 'border-amber-500/40');
                 iconSpan.textContent = '🧾';
                 badgeSpan.textContent = 'Cuenta';
-                badgeSpan.classList.add('text-indigo-400', 'bg-indigo-500/10');
+                badgeSpan.classList.add('text-amber-400', 'bg-amber-500/10');
             } else {
                 button.classList.add('border-rose-500', 'hover:border-rose-500', 'border-rose-500/40');
                 iconSpan.textContent = '👥';
@@ -287,10 +429,13 @@ window.BistroPosApp = {
         });
     },
 
-    selectTable: function (id) {
-        // Limpiar la selección de mesa
-        if (id === null) {
+    selectTable: function (id = null, orderId = null) {
+        // Limpiar la selección
+        if (id === null && orderId === null) {
             this.currentTable = null;
+            this.currentOrder = null;
+            this.currentChannel = null;
+            this.tableName = null;
             this.personCount = 0;
             const labelEl = document.getElementById('bistro-pos-table');
             if (labelEl) labelEl.innerText = "Seleccionar Mesa";
@@ -298,25 +443,42 @@ window.BistroPosApp = {
             if (peopleEl) peopleEl.innerHTML = '';
             this.selectCategory(null);
             this.cleanCart();
+            this.renderAppActions(false);
             return;
         }
 
-        if (this.currentTable === id) return;
+        if (this.currentTable === id && this.currentOrder === orderId) {
+            this.toggleTablesDrawer();
+            return;
+        }
 
         const renderTable = () => {
+            const table = this.tables.find(t => t.id === id);
+            const order = this.orders.find(o => o.id === orderId);
+
             this.currentTable = id;
+            this.currentOrder = orderId;
+
+            // Obtener el canal de la orden o de la mesa de forma segura
+            this.currentChannel = order?.channel_id ?? table?.channel_id ?? null;
+
+            // Obtener el nombre priorizando la mesa o el nombre de la orden temporal
+            this.tableName = table?.name ?? order?.name ?? 'Cliente';
+
             this.toggleTablesDrawer();
             this.renderPeople();
             this.cleanCart();
 
+            const activeOrder = orderId !== null || (table && table.status === 'closed');
+            this.renderAppActions(activeOrder);
+
             const labelEl = document.getElementById('bistro-pos-table');
-            const table = this.tables.find(table => table.id === id);
-            if (labelEl) labelEl.innerText = table.name;
-        }
+            if (labelEl) labelEl.innerText = this.tableName;
+        };
 
         if (this.cart.length > 0) {
             IxeaComponents.showConfirm({
-                text: '¿Seguro que quieres cambiar de mesa? Se borrará la comanda actual.',
+                text: '¿Seguro que quieres cambiar de mesa/cuenta? Se borrará la comanda actual.',
                 icon: 'warning',
                 confirmButtonText: 'Sí, cambiar',
                 cancelButtonText: 'Cancelar',
@@ -327,6 +489,84 @@ window.BistroPosApp = {
             return;
         }
         renderTable();
+    },
+
+    // ==========================================
+    // Cuentas temporales
+    // ==========================================
+
+    /** Abrir modal para crear cuenta temporal */
+    openTemporaryTable: function () {
+        this.currentChannel = null;
+        IxeaComponents.openModal('order', {
+            addClassModal: 'backdrop-blur-md',
+            addClass: 'w-full max-w-lg',
+            onOpen: () => {
+                const nameInput = document.getElementById('bistro-pos-customer-name');
+                if (nameInput) nameInput.focus();
+            }
+        });
+    },
+
+    /** Selección de canal de atención */
+    selectChannel: function (btn) {
+        document.querySelectorAll('.channel-btn').forEach(b => {
+            b.className = "channel-btn flex flex-col items-center justify-center p-3 bg-slate-900 border border-slate-700 hover:border-blue-500 rounded-xl transition cursor-pointer group h-24";
+        });
+        btn.className = "channel-btn flex flex-col items-center justify-center p-3 bg-indigo-600 border border-indigo-400 rounded-xl transition cursor-pointer group h-24 shadow-md";
+        this.currentChannel = parseInt(btn.dataset.id);
+    },
+
+    confirmTemporaryOrder: async function () {
+        const input = document.getElementById('bistro-pos-customer-name');
+        const customerName = input ? input.value.trim() : '';
+        const waiter = this.currentUser;
+
+        if (!this.currentChannel) {
+            IxeaComponents.showAlert({ text: 'Seleccione un canal de atención.', icon: 'warning' });
+            return;
+        }
+        if (!customerName) {
+            IxeaComponents.showAlert({ text: 'Ingrese el nombre del cliente.', icon: 'warning' });
+            return;
+        }
+
+        IxeaComponents.showLoading({ text: 'Abriendo cuenta...' });
+
+        try {
+            const res = await IxeaBridge.post('/api/v1/bistro-pos/open-temporal', {
+                channel_id: this.currentChannel,
+                customer_name: customerName,
+                waiter_id: waiter
+            });
+
+            IxeaComponents.hideLoading();
+
+            if (res.success) {
+                this.orders.unshift(res.data);
+                this.selectTable(-1, res.data.id);
+                IxeaComponents.closeModal();
+                this.renderAppActions(true);
+                IxeaComponents.showAlert({
+                    icon: 'success',
+                    text: 'Cuenta abierta correctamente.',
+                    timer: 1500
+                });
+            } else {
+                console.error(res.message);
+                IxeaComponents.showAlert({
+                    icon: 'error',
+                    text: res.message || 'Error al abrir cuenta.'
+                });
+            }
+        } catch (err) {
+            IxeaComponents.hideLoading();
+            console.error(err);
+            IxeaComponents.showAlert({
+                icon: 'error',
+                text: 'Error de conexión, intente nuevamente.'
+            });
+        }
     },
 
     // ==========================================
@@ -425,9 +665,8 @@ window.BistroPosApp = {
             button.id = `bistro-pos-product-${product.id}`;
             button.className = 'bg-slate-800 border border-slate-700/80 rounded-xl p-3 flex flex-col justify-between active:scale-95 transition cursor-pointer hover:border-emerald-500';
             button.innerHTML = `
-                <h2 class="font-bold text-lg text-slate-100">${product.name}</h2>
-                <p class="font-black text-emerald-400 text-base">$ ${product.price}</p>
-                <p class="text-xs text-slate-400">Tocar para agregar predeterminado</p>
+                <h2 class="font-extrabold text-xl text-slate-100">${product.name}</h2>
+                <p class="font-black text-emerald-400 text-base mt-2">$ ${product.price}</p>
             `;
             button.onclick = () => this.selectProduct(product.id);
             container.appendChild(button);
@@ -555,10 +794,7 @@ window.BistroPosApp = {
      */
     openModifiers: function (groups) {
         IxeaComponents.openModal('modifiers', {
-            maxw: '2xl',
-            maxh: '[80vh]',
-            scroll: 'hidden', // Importante: el scroll lo maneja el div interno
-            flex: 'col',
+            addClass: 'max-w-2xl max-h-[80vh] overflow-hidden flex flex-col',
             onOpen: () => {
                 // Título
                 const titleEl = document.getElementById('bistro-pos-modifier-title');
@@ -744,7 +980,7 @@ window.BistroPosApp = {
             cartEl.innerHTML = `
                 <div class="h-full flex flex-col items-center justify-center text-slate-500 py-10">
                     <span class="text-4xl mb-2">🍽️</span>
-                    <p class="text-xs font-semibold">Sin productos en la mesa</p>
+                    <p class="text-xs font-semibold">Comandera sin ordenes</p>
                 </div>`;
             if (totalEl) totalEl.innerText = "$ 0.00";
             return;
@@ -779,7 +1015,6 @@ window.BistroPosApp = {
                 <!-- Contenido deslizable -->
                 <div id="cart-item-${index}"
                     data-index="${index}"
-                    onclick="BistroPosApp.modifyItem(${index})" 
                     class="swipe-item relative bg-slate-900 p-3 cursor-pointer transition-transform duration-200 ease-out z-20 hover:border-indigo-500">
                     <div class="flex justify-between items-start">
                         <h4 class="font-bold text-sm text-slate-200">${item.qty}x ${item.name}</h4>
@@ -829,9 +1064,11 @@ window.BistroPosApp = {
 
         try {
             // 2. Estructurar el payload que va al servidor
-            const orderPayload = {
-                table_id: this.currentTable ?? null,
+            const payload = {
                 waiter_id: this.currentUser ?? null,
+                table_id: this.currentTable ?? null,
+                order_id: this.currentOrder ?? null,
+                channel_id: this.currentChannel ?? null,
                 items: this.cart.map(item => ({
                     product_id: item.product_id,
                     qty: item.qty,
@@ -843,14 +1080,22 @@ window.BistroPosApp = {
                     }))
                 }))
             };
-
+            console.log(payload);
             // 3. Petición al backend
-            const res = await IxeaBridge.post('/api/v1/bistro-pos/process-order', orderPayload);
+            const res = await IxeaBridge.post('/api/v1/bistro-pos/process-order', payload);
 
             // 4. Cerrar la pantalla de carga antes de mostrar la alerta final
             IxeaComponents.hideLoading();
 
             if (res.success) {
+                if (res.data) {
+                    try {
+                        await IxeaBridge.sendToLocalServer('/print-ticket/order', res.data);
+                    } catch (error) {
+                        console.error('[Print Warning]: No se pudo imprimir la comanda localmente:', error);
+                    }
+                }
+
                 IxeaComponents.showAlert({
                     title: '¡Comanda Enviada!',
                     text: res.message || 'Orden enviada a cocina con éxito.',
@@ -858,8 +1103,7 @@ window.BistroPosApp = {
                     timer: 2500
                 });
 
-                // Limpiar mesa seleccionada y carrito
-                this.selectTable(null);
+                this.selectTable();
                 this.fetchTables();
             } else {
                 throw new Error(res.message || 'No se pudo procesar la orden en cocina.');
@@ -880,33 +1124,444 @@ window.BistroPosApp = {
     // ==========================================
     // CUENTAS Y FACTURACIÓN
     // ==========================================
-    openSplitOptions: function () {
-        IxeaComponents.closeModal();
-        IxeaComponents.openModal('modal-split-options');
+    /**
+     * Pregunta al usuario si desea solicitar la cuenta
+     */
+    requestBill: function () {
+        if (!this.currentTable) {
+            IxeaComponents.showAlert({
+                text: 'Debes seleccionar una mesa o cuenta.',
+                icon: 'warning'
+            });
+            return;
+        }
+
+        let canSplit = false;
+        if (this.currentTable === -1) {
+            const order = this.orders.find(order => order.id === this.currentOrder);
+            if (!order) {
+                IxeaComponents.showAlert({
+                    text: 'No se encontró la cuenta.',
+                    icon: 'warning'
+                });
+                return;
+            }
+
+            if (order.status !== 'closed') {
+                IxeaComponents.showAlert({
+                    text: 'La cuenta no se puede cerrar.',
+                    icon: 'warning'
+                });
+                return;
+            }
+        } else {
+            const table = this.tables.find(table => table.id === this.currentTable);
+            if (table.status === 'open') {
+                IxeaComponents.showAlert({
+                    text: 'No hay cuentas abiertas en esta mesa.',
+                    icon: 'warning'
+                });
+                return;
+            }
+            if (table.status === 'pending') {
+                IxeaComponents.showAlert({
+                    text: 'Esta mesa ya tiene una cuenta en proceso.',
+                    icon: 'warning'
+                });
+                return;
+            }
+            if (this.cart.length > 0) {
+                IxeaComponents.showAlert({
+                    text: 'Hay productos pendientes en la comanda, favor de cerrar la comanda antes de solicitar la cuenta',
+                    icon: 'warning',
+                });
+                return;
+            }
+            if (table.count > 1) canSplit = true;
+        }
+
+        IxeaComponents.openModal('bill', {
+            addClassModal: 'backdrop-blur-md',
+            addClass: 'w-80',
+            onOpen: () => {
+                const el = document.getElementById('bistro-pos-split-equal');
+                if (!el) return;
+                if (canSplit) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            }
+        });
     },
 
-    processBill: async function (type) {
+    /**
+     * Abre el modal para elegir método de división de cuenta.
+     */
+    openSplitOptions: function () {
+        IxeaComponents.openModal('bill-split', {
+            addClassModal: 'backdrop-blur-md',
+            addClass: 'w-80'
+        });
+    },
+
+    confirmBillRequest: async function (type) {
         IxeaComponents.closeModal();
+        IxeaComponents.showLoading({ text: 'Procesando cuenta...' });
 
         try {
-            const res = await fetch('/api/v1/bistro-pos/request-bill', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    table: this.currentTable,
+            let payload = {};
+            if (this.currentTable === -1) {
+                payload = {
+                    order_id: this.currentOrder,
                     type: type
-                })
-            });
-            const data = await res.json();
+                };
+            } else {
+                payload = {
+                    table_id: this.currentTable,
+                    type: type
+                };
+            }
+            const res = await IxeaBridge.post('/api/v1/bistro-pos/request-bill', payload);
 
-            if (data.success) {
-                alert(`🧾 Cuenta solicitada (${type}) para ${this.currentTable}`);
+            IxeaComponents.hideLoading();
+            console.log(res);
+
+            if (res.success) {
+                IxeaComponents.showAlert({
+                    title: 'Cuenta solicitada. Enviando a impresora...',
+                    text: res.message || '',
+                    icon: 'success',
+                    timer: 2500
+                });
+
+                // Petición al servidor local usando try / catch / finally
+                try {
+                    const printRes = await IxeaBridge.sendToLocalServer('/print-ticket/bill', { ticket: res.data });
+
+                    IxeaComponents.showAlert({
+                        text: 'Cuenta impresa en caja',
+                        icon: 'success',
+                        timer: 2500
+                    });
+                } catch (err) {
+                    IxeaComponents.showAlert({
+                        title: 'Aviso de impresión',
+                        text: 'La cuenta se registró pero no se pudo conectar con la impresora local.',
+                        icon: 'warning',
+                        timer: 2500
+                    });
+                } finally {
+                    // Se ejecuta siempre, haya fallado o no la impresión
+                    this.selectTable();
+                    this.fetchTables();
+                }
+
+            } else {
+                IxeaComponents.showAlert({
+                    title: 'Error al procesar cuenta',
+                    text: res.message || 'No se pudo procesar la cuenta.',
+                    icon: 'error'
+                });
+                console.error("[BistroPosApp] Error al procesar cuenta:", res);
             }
         } catch (err) {
-            console.error("[POS] Error al procesar pre-cuenta:", err);
+            IxeaComponents.hideLoading();
+            IxeaComponents.showAlert({
+                title: 'Error al procesar cuenta',
+                text: 'Ocurrió un error al procesar la cuenta.',
+                icon: 'error'
+            });
+            console.error("[BistroPosApp] Error al procesar cuenta:", err);
+        }
+    },
+
+    editCurrentOrder: async function (reload = true) {
+        if (!this.currentOrder) {
+            IxeaComponents.showAlert({
+                text: 'No hay ninguna orden activa seleccionada.',
+                icon: 'warning'
+            });
+            return;
+        }
+
+        try {
+            if (reload) {
+                IxeaComponents.showLoading({ text: 'Cargando detalles de la orden...' });
+                console.log('Llamando getOrder para Orden #' + this.currentOrder);
+                const res = await IxeaBridge.get('/api/v1/bistro-pos/get-order', { order_id: this.currentOrder });
+                if (!res || !res.success || !res.data) {
+                    throw new Error(res?.message || 'No se pudo cargar la información de la orden.');
+                }
+                this.currentOrderData = res.data; // Guardamos orden en memoria
+                this.currentEditingOrder = this.currentOrderData; // Generamos copia editable de la orden
+                this.currentEditingHash = res.hash;
+                IxeaComponents.hideLoading();
+            }
+            const order = this.currentOrderData;
+
+            IxeaComponents.openModal('order-edit', {
+                addClassModal: 'backdrop-blur-md',
+                addClass: 'w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col',
+                showCancel: true, // <-- Activa el botón circular de cerrar arriba a la derecha
+                onOpen: () => {
+                    const titleEl = document.getElementById('bistro-pos-order-title');
+                    const subtitleEl = document.getElementById('bistro-pos-order-subtitle');
+
+                    // Encabezados
+                    if (titleEl) titleEl.innerText = `${order.folio}: ${order.name}`;
+                    if (subtitleEl) subtitleEl.innerText = `${order.waiter} | ${order.channel_name} | ${new Date(order.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
+
+                    // Total Global
+                    const orderTotal = document.getElementById('bistro-pos-order-total');
+                    if (orderTotal) orderTotal.innerText = `$${toCurrency(order.amount)}`;
+
+                    // Descuento Global
+                    const globalDiscountInput = document.getElementById('bistro-pos-global-discount');
+                    if (globalDiscountInput) globalDiscountInput.value = order.discount || 0;
+
+                    const container = document.getElementById('bistro-pos-order-items');
+                    if (!container) return;
+
+                    if (!order.items || order.items.length === 0) {
+                        container.innerHTML = '<p class="text-slate-500 text-sm text-center py-6">La orden no contiene ítems registrados.</p>';
+                        return;
+                    }
+
+                    // Inicializar marcas locales de edición para esta orden si no existen
+                    if (!BistroPosApp.markedOrderItems) BistroPosApp.markedOrderItems = {};
+                    if (!BistroPosApp.markedOrderItems[order.id]) BistroPosApp.markedOrderItems[order.id] = {};
+
+                    const maxPeople = Math.max(order.people || 1, 1);
+                    let targetOptionsHtml = `<option value="0">🍽️ Centro</option>`;
+                    for (let p = 1; p <= maxPeople + 1; p++) {
+                        targetOptionsHtml += `<option value="${p}">👤 P${p}</option>`;
+                    }
+
+                    container.innerHTML = order.items.map((item) => {
+                        const itemMark = BistroPosApp.markedOrderItems[order.id][item.id];
+                        let markClass = 'bg-slate-900 border-slate-700/80';
+                        if (itemMark === 'release') markClass = 'border-emerald-400 bg-emerald-950/40 shadow-[0_0_8px_rgba(52,211,153,0.2)]';
+                        if (itemMark === 'cancel') markClass = 'border-rose-400 bg-rose-950/40 shadow-[0_0_8px_rgba(251,113,133,0.2)]';
+
+                        const modifiersText = (item.modifiers || []).length > 0
+                            ? `<div class="text-left text-[11px] text-slate-400 mt-1 pl-2 border-l-2 border-indigo-500/50 space-y-0.5">
+                                ${item.modifiers.map(m => `<div>${m.name} (${m.qty}x$${toCurrency(m.price)})</div>`).join('')}
+                            </div>`
+                            : '';
+
+                        // Precio unitario base + modificadores
+                        const finalAmount = (parseFloat(item.unitary) * parseFloat(item.quantity)) + (item.modifiers || []).reduce((acc, m) => acc + (parseFloat(m.price) * parseFloat(m.qty || 1)), 0);
+
+                        return `
+                        <div class="item-edit-card ${markClass} border rounded-xl p-3 mb-2.5 shadow-sm transition cursor-pointer select-none" data-item-id="${item.id}">
+                            <div class="flex justify-between items-start mb-1.5">
+                                <div class="flex-1 pr-2">
+                                    <h4 class="font-extrabold text-sm text-slate-100 flex justify-between items-center">
+                                        <span>${item.quantity}x ${item.name}</span>
+                                        <span id="item-amount-${item.id}" class="text-emerald-400 text-sm font-mono font-bold">$${toCurrency(finalAmount)}</span>
+                                    </h4>
+                                </div>
+                            </div>
+
+                            ${modifiersText}
+                            ${item.notes ? `<div class="mt-2 ps-2 text-left text-[11px] text-amber-400/90 italic">📝 ${item.notes}</div>` : ''}
+
+                            <div class="flex flex-wrap justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-xs gap-2">
+                                <!-- Selector de Target interactivo -->
+                                <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase">Asignar:</span>
+                                    <select onchange="BistroPosApp.updateItemTarget(${item.id}, this.value)" 
+                                        id="item-target-${item.id}"
+                                        class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-indigo-300 font-semibold focus:outline-none focus:border-indigo-500">
+                                        ${targetOptionsHtml.replace(`value="${item.target}"`, `value="${item.target}" selected`)}
+                                    </select>
+                                </div>
+
+                                <!-- Input de Descuento Porcentual (0 a 100) -->
+                                <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase">Desc (%):</span>
+                                    <input type="number" min="0" max="100" step="1" value="${item.discount || 0}"
+                                        id="item-discount-${item.id}"
+                                        oninput="BistroPosApp.calculateOrderTotals()"
+                                        onchange="BistroPosApp.calculateOrderTotals()"
+                                        class="w-16 bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-0.5 text-xs text-center text-amber-400 font-bold focus:outline-none focus:border-indigo-500">
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    // Vincular eventos de toque y doble toque estilo KDS en cada tarjeta de ítem
+                    container.querySelectorAll('.item-edit-card').forEach(card => {
+                        const itemId = parseInt(card.dataset.itemId);
+                        BistroPosApp.bindItemClickEvents(card, order.id, itemId);
+                    });
+                    this.calculateOrderTotals();
+                },
+                onConfirm: () => { // <-- Activa el botón circular azul con la flecha -> abajo a la derecha
+                    BistroPosApp.saveOrderEdits();
+                }
+            });
+
+        } catch (err) {
+            IxeaComponents.hideLoading();
+            console.error('[BistroPosApp] Error al abrir edición de orden:', err);
+            IxeaComponents.showAlert({
+                text: err.message || 'Error al obtener la orden.',
+                icon: 'error'
+            });
+        }
+    },
+
+    bindItemClickEvents: function (element, orderId, itemId) {
+        let clickTimeout = null;
+
+        element.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('input') || e.target.closest('select')) return;
+
+            if (clickTimeout !== null) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+                this.markItemAction(orderId, itemId, 'cancel'); // Doble clic = Cancelar
+            } else {
+                clickTimeout = setTimeout(() => {
+                    clickTimeout = null; // Un clic: Nada
+                }, 280);
+            }
+        });
+    },
+
+    /**
+     * Marca un item para ser cancelado o restaurado al guardar la edición.
+     * @param {number} orderId - ID de la orden.
+     * @param {number} itemId - ID del item.
+     * @param {string} action - 'cancel' para cancelar, 'restore' para restaurar.
+     */
+    markItemAction: function (orderId, itemId, action) {
+        if (!this.markedOrderItems[orderId]) this.markedOrderItems[orderId] = {};
+        const current = this.markedOrderItems[orderId][itemId];
+        const item = this.currentEditingOrder.items.find(i => i.id === itemId);
+        if (!item) return;
+
+        if (current === action) {
+            delete this.markedOrderItems[orderId][itemId];
+            item.status = item.last_status || 'pending';
+        } else {
+            this.markedOrderItems[orderId][itemId] = action;
+            item.last_status = item.status;
+            item.status = 'cancelled';
+        }
+
+        // 1. Capturar la posición actual del scroll del contenedor de ítems
+        const container = document.getElementById('bistro-pos-order-items');
+        const scrollPosition = container ? container.scrollTop : 0;
+
+        // 2. Refrescar las tarjetas
+        this.editCurrentOrder(false);
+
+        // 3. Restaurar exactamente la posición del scroll en el siguiente frame
+        requestAnimationFrame(() => {
+            const refreshedContainer = document.getElementById('bistro-pos-order-items');
+            if (refreshedContainer) {
+                refreshedContainer.scrollTop = scrollPosition;
+            }
+        });
+    },
+
+    updateItemTarget: function (itemId, target) {
+        // Obtenemos la orden actual
+        const item = this.currentEditingOrder.items.find(item => item.id === itemId);
+        item.target = parseInt(target);
+    },
+
+
+    /**
+     * Calcula el total de la orden basado en los items y descuentos.
+     * @returns {number} El total de la orden.
+     */
+    calculateOrderTotals: function () {
+        if (!this.currentEditingOrder || !this.currentEditingOrder.items) return 0;
+
+        let subtotalAccumulator = 0;
+        const items = this.currentEditingOrder.items;
+
+        items.forEach(item => {
+
+            // Leer el input de descuento del ítem directamente del DOM
+            const discountInput = document.getElementById(`item-discount-${item.id}`);
+            const itemDiscountPct = discountInput ? Math.min(100, Math.max(0, parseFloat(discountInput.value) || 0)) : (parseFloat(item.discount) || 0);
+
+            // Actualizar en el objeto en memoria
+            item.discount = itemDiscountPct;
+
+            // Calcular base (unitario * cantidad + modificadores)
+            const baseUnitPrice = parseFloat(item.unitary) || 0;
+            const qty = parseFloat(item.quantity) || 1;
+            const itemModifiers = item.modifiers || [];
+
+            const modifiersTotal = itemModifiers.reduce((acc, m) => acc + ((parseFloat(m.price) || 0) * (parseFloat(m.qty || 1))), 0);
+            const itemBaseTotal = (baseUnitPrice * qty) + modifiersTotal;
+
+            // Aplicar descuento porcentual a nivel ítem
+            const itemFinalAmount = itemBaseTotal * (1 - (itemDiscountPct / 100));
+            item.amount = itemFinalAmount;
+
+            const isCancelled = item.status === 'cancelled';
+            const amountDisplay = isCancelled ? '$0.00' : `$${toCurrency(itemFinalAmount)}`;
+            const amountClass = isCancelled ? 'text-slate-500 line-through' : 'text-emerald-400';
+            subtotalAccumulator += isCancelled ? 0 : itemFinalAmount;
+
+            // Actualizar el texto del monto individual en su respectiva tarjeta del DOM
+            const amountEl = document.getElementById(`item-amount-${item.id}`);
+            if (amountEl) {
+                amountEl.innerText = amountDisplay;
+                amountEl.className = `text-sm font-mono font-bold ${amountClass}`;
+            }
+
+        });
+
+        // Aplicar Descuento Global (%)
+        const globalDiscountInput = document.getElementById('bistro-pos-global-discount');
+        const globalDiscountPct = globalDiscountInput ? Math.min(100, Math.max(0, parseFloat(globalDiscountInput.value) || 0)) : (parseFloat(this.currentEditingOrder.discount) || 0);
+
+        this.currentEditingOrder.discount = globalDiscountPct;
+
+        const grandTotal = subtotalAccumulator * (1 - (globalDiscountPct / 100));
+        this.currentEditingOrder.amount = grandTotal;
+
+        // Actualizar el Total General en el encabezado del modal
+        const totalHeaderEl = document.getElementById('bistro-pos-order-total');
+        if (totalHeaderEl) {
+            totalHeaderEl.innerText = `$${toCurrency(grandTotal)}`;
+        }
+    },
+
+    saveOrderEdits: async function () {
+        if (!this.currentEditingOrder) return;
+
+        const payload = {
+            order: this.currentEditingOrder,
+            hash: this.currentEditingHash
+        }
+
+        try {
+            IxeaComponents.showLoading({ text: 'Guardando cambios de la orden...' });
+
+            const res = await IxeaBridge.post('/api/v1/bistro-pos/update-order', payload);
+
+            IxeaComponents.hideLoading();
+
+            if (!res.success) {
+                throw new Error(res.message || 'Error al guardar los cambios en el servidor.');
+            }
+
+            IxeaComponents.showAlert({ text: 'Orden actualizada con éxito.', icon: 'success', timer: 1800 });
+            IxeaComponents.closeModal();
+            this.fetchTables();
+
+        } catch (err) {
+            IxeaComponents.hideLoading();
+            IxeaComponents.showAlert({ text: err.message || 'Error de comunicación.', icon: 'error' });
         }
     }
-};
+}

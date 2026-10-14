@@ -5,6 +5,7 @@ namespace App\Core;
 
 use App\Models\SysTable;
 use App\Models\SysLog;
+use App\Enums\Status;
 use App\Enums\SysAction;
 use Throwable;
 
@@ -99,7 +100,7 @@ abstract class Controller
     /**
      * Registra un evento en la tabla sys_logs
      */
-    protected function sysLog(
+    protected static function sysLog(
         ?int $userId = null,
         int $actionId = 1,
         ?int $statusId = null,
@@ -129,7 +130,7 @@ abstract class Controller
             ];
 
             // SOLO actualizamos el timestamp si hubo una modificación real de datos
-            if ($tableId && in_array($actionId, $mutatingActions, true)) {
+            if ($tableId && in_array($actionId, $mutatingActions, true) && $statusId == Status::SUCCESS) {
                 SysTable::where('id', $tableId)->update([
                     'updated_at' => date('Y-m-d H:i:s')
                 ]);

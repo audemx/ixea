@@ -7,6 +7,9 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class Connection
 {
+    /** @var Capsule */
+    protected static $capsule;
+
     public static function boot(): void
     {
         $dotenvPath = __DIR__ . '/..';
@@ -18,23 +21,20 @@ class Connection
         $getEnv = fn($key, $default = '') => $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;
 
         $host = $getEnv('DB_HOST', '127.0.0.1');
-
-        // Detectar si la ejecución ocurre FUERA de Docker
         $isInsideDocker = file_exists('/.dockerenv');
 
-        // Si se ejecuta en el OS local (macOS/Linux) y apunta al nombre del contenedor, usar localhost
-        if (!$isInsideDocker && ($host === 'dev-db-1' || $host === 'db')) {
+        if (!$isInsideDocker) {
             $host = '127.0.0.1';
         }
 
-        // Compatibilidad PHP 8.5+
         $initAttr = defined('\Pdo\Mysql::ATTR_INIT_COMMAND')
             ? \Pdo\Mysql::ATTR_INIT_COMMAND
             : \PDO::MYSQL_ATTR_INIT_COMMAND;
 
-        $capsule = new Capsule;
+        self::$capsule = new Capsule;
 
-        $capsule->addConnection([
+        // 1. Conexión por defecto (ixea_db / Central)
+        self::$capsule->addConnection([
             'driver'    => $getEnv('DB_DRIVER', 'mysql'),
             'host'      => $host,
             'port'      => $getEnv('DB_PORT', '3306'),
@@ -50,9 +50,63 @@ class Connection
                 \PDO::ATTR_EMULATE_PREPARES   => false,
                 $initAttr                     => "SET time_zone = '-06:00'"
             ]
-        ]);
+        ], 'default'); // Nombrada explícitamente como 'default'
 
-        $capsule->setAsGlobal();
-        $capsule->bootEloquent();
+        self::$capsule->setAsGlobal();
+        self::$capsule->bootEloquent();
+    }
+
+    /**
+     * Registra y activa una conexión dinámica para un Tenant específico
+     */
+    public static function connectToTenant(object $tenant): void
+    {
+        $host = $tenant->db_host;
+        $isInsideDocker = file_exists('/.dockerenv');
+        
+        if ($isInsideDocker) {
+            // Si corre en la web/contenedor, '127.0.0.1' o 'localhost' debe resolverse al servicio 'ixea_db'
+            if ($host === '127.0.0.1' || $host === 'localhost') {
+                $host = 'ixea_db'; 
+            }
+        } else {
+            // Si corre en tu Mac por CLI, 'ixea_db' o 'localhost' debe resolverse al puerto mapeado '127.0.0.1'
+            if ($host === 'ixea_db' || $host === 'db' || $host === 'localhost') {
+                $host = '127.0.0.1';
+            }
+        }
+
+        $initAttr = defined('\Pdo\Mysql::ATTR_INIT_COMMAND')
+            ? \Pdo\Mysql::ATTR_INIT_COMMAND
+            : \PDO::MYSQL_ATTR_INIT_COMMAND;
+
+        // Agregamos la conexión con las credenciales exclusivas del tenant
+        self::$capsule->addConnection([
+            'driver'    => 'mysql',
+            'host'      => $host,
+            'port'      => $tenant->db_port ?? 3306,
+            'database'  => $tenant->db_name,
+            'username'  => $tenant->db_user,
+            'password'  => $tenant->db_pass, // ej. 'panga_1234.'
+            'charset'   => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix'    => '',
+            'options'   => [
+                \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                \PDO::ATTR_EMULATE_PREPARES   => false,
+                $initAttr                     => "SET time_zone = '-06:00'"
+            ]
+        ], 'tenant'); // Se nombra 'tenant'
+
+        // Forzamos a que el modelo por defecto use esta conexión de ahora en adelante en el request
+        self::$capsule->getDatabaseManager()->setDefaultConnection('tenant');
+
+        // PRUEBA DE CONEXIÓN inmediata.
+        try {
+            self::$capsule->connection('tenant')->getPdo();
+        } catch (\Throwable $e) {
+            throw new \Exception("No se pudo enlazar la unidad de negocio con su base de datos. Contacte con soporte.");
+        }
     }
 }

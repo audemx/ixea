@@ -24,5 +24,5 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // 4. Redirigir al login
-header("Location: /eros/login?status=logged_out");
+header("Location: /login?status=logged_out");
 exit;

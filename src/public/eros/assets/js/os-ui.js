@@ -421,38 +421,86 @@ const IxeaComponents = {
 
         modal.innerHTML = '';
 
-        let modalClassList = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3'
-        let contentClassList = 'bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-2xl';
+        const extraClasses = options.addClass || options.class || '';
 
-        // Definir clases del modal
-        options.backdrop ? modalClassList += ` backdrop-blur-${options.backdrop}` : modalClassList += ' backdrop-blur-sm';
-        modal.className = modalClassList;
+        // 1. Clases base por defecto para el contenido
+        let contentClasses = [
+            'bg-slate-800',
+            'border',
+            'border-slate-700',
+            'rounded-2xl',
+            'p-3',
+            'shadow-2xl',
+            'w-full',          // Se reemplazará si usas w-...
+            'text-center',      // Se reemplazará si usas text-...
+            'items-center',     // Se reemplazará si usas items-...
+            'overflow-hidden'   // Se reemplazará si usas overflow-...
+        ];
 
-        // Definir clases del contenido
-        options.width ? contentClassList += ` w-${options.width}` : contentClassList += ' w-full';
-        options.height ? contentClassList += ` h-${options.height}` : contentClassList += '';
-        options.maxw ? contentClassList += ` max-w-${options.maxw}` : contentClassList += '';
-        options.maxh ? contentClassList += ` max-h-${options.maxh}` : contentClassList += '';
-        options.xalign ? contentClassList += ` text-${options.xalign}` : contentClassList += ' text-center';
-        options.yalign ? contentClassList += ` items-${options.yalign}` : contentClassList += ' items-center';
-        options.scroll ? contentClassList += ` overflow-${options.scroll}` : contentClassList += ' overflow-hidden';
-        options.flex ? contentClassList += ` flex flex-${options.flex}` : contentClassList += '';
+        // 2. Si addClass contiene utilidades específicas, removemos el valor por defecto
+        if (/\bw-/.test(extraClasses)) contentClasses = contentClasses.filter(c => !c.startsWith('w-'));
+        if (/\btext-/.test(extraClasses)) contentClasses = contentClasses.filter(c => !c.startsWith('text-'));
+        if (/\bitems-/.test(extraClasses)) contentClasses = contentClasses.filter(c => !c.startsWith('items-'));
+        if (/\boverflow-/.test(extraClasses)) contentClasses = contentClasses.filter(c => !c.startsWith('overflow-'));
 
+        // 3. Crear el contenedor con las clases resueltas
         const child = document.createElement('div');
-        child.className = contentClassList;
+        child.className = `${contentClasses.join(' ')} ${extraClasses}`.trim();
+
+        // 4. Modal Backdrop (mismo principio para addClassModal)
+        let modalClasses = ['fixed', 'inset-0', 'bg-black/70', 'z-50', 'flex', 'items-center', 'justify-center', 'p-3', 'backdrop-blur-sm'];
+        const extraModalClasses = options.addClassModal || '';
+        if (/\bbackdrop-blur-/.test(extraModalClasses)) {
+            modalClasses = modalClasses.filter(c => !c.startsWith('backdrop-blur-'));
+        }
+        modal.className = `${modalClasses.join(' ')} ${extraModalClasses}`.trim();
 
         const clone = template.content.cloneNode(true);
         child.appendChild(clone);
+
+        // ==========================================
+        // BOTONES FLOTANTES CONDICIONALES
+        // ==========================================
+
+        // A. Botón Circular de Cierre (Arriba a la derecha, dentro del cuadro)
+        if (options.showCancel === true) {
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.innerHTML = '✕';
+            closeBtn.title = 'Cerrar';
+            // Valores positivos pequeños (top-3 right-3) para que queden flotando dentro del margen superior derecho
+            closeBtn.className = 'absolute top-3 right-3 w-12 h-12 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-full flex items-center justify-center shadow-2xl border-2 border-slate-600 transition z-30 cursor-pointer font-bold text-lg';
+            closeBtn.onclick = () => IxeaComponents.closeModal();
+            child.appendChild(closeBtn);
+        }
+
+        // B. Botón Circular de Confirmación con Flecha (Abajo a la derecha, dentro del cuadro)
+        if (typeof options.onConfirm === 'function') {
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.innerHTML = '→';
+            confirmBtn.title = 'Confirmar';
+            // Valores positivos pequeños (bottom-3 right-3) para que queden flotando dentro del margen inferior derecho
+            confirmBtn.className = 'absolute bottom-3 right-3 w-14 h-14 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl border-2 border-blue-400 transition z-30 cursor-pointer font-extrabold text-2xl';
+            confirmBtn.onclick = () => options.onConfirm();
+            child.appendChild(confirmBtn);
+        }
+
         modal.appendChild(child);
 
-        // Ejecutar callback si existe
-        if (options.onOpen) options.onOpen();
+        // 4. Ejecutar el callback y el focus en el siguiente frame de renderizado
+        requestAnimationFrame(() => {
+            // Ejecutar callback si existe
+            if (typeof options.onOpen === 'function') {
+                options.onOpen();
+            }
 
-        // Configurar Focus Automático (Si se solicita)
-        if (options.focusId) {
-            const el = document.getElementById(options.focusId);
-            if (el) el.focus();
-        }
+            // Configurar Focus Automático
+            if (options.focusId) {
+                const el = document.getElementById(options.focusId);
+                if (el) el.focus();
+            }
+        });
     },
 
     closeModal: function () {
@@ -636,11 +684,14 @@ const IxeaBouncer = {
 };
 
 /**
- * Objeto para manejar la intro
+ * Objeto para manejar UI
  */
 const IxeaUI = {
+    isStandalone: false,
+
     init: function () {
         this.intro();
+        this.defineStandalone();
     },
 
     intro: function () {
@@ -688,5 +739,15 @@ const IxeaUI = {
                 }, 1200); // Sincronizado con la salida
             }, 6200);
         }, 500); // <-- EL DELAY DE MEDIO SEGUNDO
+    },
+
+    defineStandalone: function () {
+        this.isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (this.isStandalone) {
+            console.log('[IxeaUI] Modo: Aplicación nativa.');
+        } else {
+            console.log('[IxeaUI] Modo: Navegador web.');
+        }
     }
 }

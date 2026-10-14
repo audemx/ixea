@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+use App\Core\Config;
 use App\Models\Role;
 use App\Models\RolePermission;
 use App\Enums\Status;
@@ -11,9 +12,8 @@ class Security
 {
     public static function authorize(): array
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        // Inicializa configuración y sesión
+        Config::init();
 
         // 1. Verificación de Login
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
@@ -60,10 +60,12 @@ class Security
             'userId'          => (int)$_SESSION['user_id'],
             'roleId'          => (int)$_SESSION['role_id'],
             'userName'        => $_SESSION['user_name'] ?? 'User',
+            'fullName'        => $_SESSION['full_name'] ?? 'User',
             'roleName'        => $_SESSION['role_name'] ?? 'Guest',
             'userEmail'       => $_SESSION['user_email'] ?? '',
             'isSuper'         => $isSuper,
-            'userPermissions' => $isSuper ? [0] : ($userPermissions ?? [])
+            'userPermissions' => $isSuper ? [0] : ($userPermissions ?? []),
+            'business'        => $_SESSION['business'] ?? null
         ];
     }
 
@@ -100,7 +102,7 @@ class Security
             exit;
         }
 
-        header("Location: /eros/login?error={$reason}");
+        header("Location: /login?error={$reason}");
         exit;
     }
 

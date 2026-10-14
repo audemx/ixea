@@ -6,12 +6,37 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use App\Database\Connection;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-function deleteDirectory($dir) {
+Connection::boot();
+
+// Revisar si se pasó un tenant por argumento de consola (CLI)
+$tenantDb = isset($argv[1]) ? strtolower(trim($argv[1])) : null;
+if ($tenantDb) {
+    echo "🔍 Buscando credenciales para el tenant: '{$tenantDb}' en ixea_db...\n";
+    
+    // Consultamos la tabla tenants en ixea_db (conexión 'default')
+    $tenant = Capsule::connection('default')->table('tenants')
+        ->where('db_name', $tenantDb)
+        ->first();
+
+    if (!$tenant) {
+        echo "❌ Error: No se encontró ningún tenant que coincida con '{$tenantDb}'\n";
+        exit(1);
+    }
+
+    echo "⚙️  Conectando dinámicamente a la base de datos del tenant: {$tenant->db_name} ({$tenant->db_host})...\n";
+    
+    // Inyectamos la conexión del tenant usando el método que ya creamos en Connection
+    Connection::connectToTenant($tenant);
+} else {
+    echo "ℹ️  No se especificó tenant. Trabajando sobre la base de datos por defecto configurada.\n";
+}
+
+function deleteEnumDirectory($dir) {
     if (!file_exists($dir)) return true;
     if (!is_dir($dir)) return unlink($dir);
     foreach (scandir($dir) as $item) {
         if ($item == '.' || $item == '..') continue;
-        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+        if (!deleteEnumDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
     }
     return rmdir($dir);
 }
@@ -23,7 +48,7 @@ function sanitizeConstantName(string $string): string
     return strtoupper($clean);
 }
 
-function singularize($word) {
+function singularizeEnum($word) {
     $rules = [
         '/(quiz)zes$/i' => '$1',
         '/(matr|vert|ind)ices$/i' => '$1ex',
@@ -57,19 +82,16 @@ function singularize($word) {
     return $word;
 }
 
-function tableNameToClassName($tableName) {
+function tableNameToEnumName($tableName) {
     $parts = explode('_', $tableName);
     $singularParts = array_map(function($part, $index) use ($parts) {
-        return ($index === count($parts) - 1) ? singularize($part) : $part;
+        return ($index === count($parts) - 1) ? singularizeEnum($part) : $part;
     }, $parts, array_keys($parts));
     
     return str_replace(' ', '', ucwords(implode(' ', $singularParts)));
 }
 
 try {
-    // 0. Inicializar Eloquent con la configuración de la BD
-    Connection::boot();
-
     // 1. Obtener la instancia PDO
     $pdo = Capsule::connection()->getPdo();
     
@@ -107,7 +129,7 @@ try {
             continue;
         }
 
-        $className = tableNameToClassName($tableName);
+        $className = tableNameToEnumName($tableName);
         
         // Obtener los registros de la tabla de catálogo
         $rows = Capsule::table($tableName)->select('id', $nameColumn)->get();

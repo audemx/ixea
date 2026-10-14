@@ -46,5 +46,4 @@ if ('serviceWorker' in navigator) {
 <!-- Scripts principales de IXEA OS con versionado dinámico -->
 <script src="/assets/js/os-kernel.js?v=<?= $getJsVersion('/assets/js/os-kernel.js'); ?>"></script>
 <script src="/assets/js/os-ui.js?v=<?= $getJsVersion('/assets/js/os-ui.js'); ?>"></script>
-<script src="/assets/js/os-widgets.js?v=<?= $getJsVersion('/assets/js/os-widgets.js'); ?>"></script>
 <script src="/assets/js/os-apis.js?v=<?= $getJsVersion('/assets/js/os-apis.js'); ?>"></script>

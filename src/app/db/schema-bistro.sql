@@ -7,9 +7,9 @@ START TRANSACTION;
 SET time_zone = "-06:00";
 
 --
--- Base de datos: `ixea_db`
+-- Base de datos: `tenant_db`
 --
-USE `ixea_db`;
+USE `tenant_db`;
 
 --
 -- 1. Estructura de tabla para `channels`
@@ -19,6 +19,7 @@ CREATE TABLE `channels`(
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL COMMENT 'Nombre del canal',
   `description` text NULL COMMENT 'Descripción del canal',
+  `icon` varchar(50) NOT NULL COMMENT 'Clase del icono Bootstrap',
   `status_id` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Estatus del registro: 1=Active, 3=Suspended, 5=Archived',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -165,28 +166,20 @@ CREATE TABLE `orders` (
   `customer_id` int(10) UNSIGNED NULL COMMENT 'Cliente',
   `people` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de personas',
   `items` int(10) DEFAULT 0 COMMENT 'Cantidad de productos vendidos',
-  `is_taxable` tinyint(1) DEFAULT 0 COMMENT 'Indica si la orden se factura',
-  `discount` decimal(12,2) DEFAULT 0.00 COMMENT 'Descuento aplicado a la venta',
+  `discount` decimal(5,2) DEFAULT 0.00 COMMENT 'Porcentaje de descuento aplicado a la orden',
   `amount` decimal(12,2) DEFAULT 0.00 COMMENT 'Total de la venta',
-  `shift_id` int(10) UNSIGNED NULL COMMENT 'Turno de caja',
-  `paid_status` int(10) UNSIGNED NULL COMMENT 'Estado del pago: 6=pending, 7=paid, 9=cancelled, 10=returned',
-  `method_id` int(10) UNSIGNED NULL COMMENT 'Método de pago',
-  `reference` varchar(100) NULL COMMENT 'Referencia de pago',
+  `status_id` int(10) UNSIGNED DEFAULT 11 COMMENT 'Estado de orden: 11=open, 12=closed, 9=cancelled',
   `notes` text NULL COMMENT 'Notas adicionales de la venta',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `paid_at` timestamp NULL COMMENT 'Fecha del pago',
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_folio` (`folio`),
   KEY `idx_order_date` (`created_at`),
-  KEY `idx_order_finance` (`created_at`,`customer_id`,`method_id`,`amount`),
   KEY `fk_order_user` (`user_id`),
   KEY `fk_order_channel` (`channel_id`),
   KEY `fk_order_table` (`table_id`),
   KEY `fk_order_customer` (`customer_id`),
-  KEY `fk_order_shift` (`shift_id`),
-  KEY `fk_order_method` (`method_id`),
-  KEY `fk_order_paid` (`paid_status`)
+  KEY `fk_order_status` (`status_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de órdenes';
 
 -- --------------------------------------------------------
@@ -199,12 +192,12 @@ CREATE TABLE `order_external_details` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` int(10) UNSIGNED NOT NULL COMMENT 'Relación 1 a 1 con la orden principal',
   -- Identificadores y Estados Externos
-  `external_reference` varchar(100) NOT NULL COMMENT 'ID de la orden asignado por la plataforma (ej: UBER-98214)',
+  `external_reference` varchar(100) NULL COMMENT 'ID de la orden asignado por la plataforma (ej: UBER-98214)',
   `external_status` varchar(50) NULL COMMENT 'Estado reportado por la API (ej: DRIVER_ASSIGNED, STORE_ACCEPTED)',
   `display_id` varchar(20) NULL COMMENT 'Folio corto visible para el repartidor (ej: #A92)',
   -- Datos Financieros Reales de la Plataforma
-  `user_amount` decimal(12,2) NOT NULL COMMENT 'Lo que pagó el cliente final en la app',
-  `payout_amount` decimal(12,2) NOT NULL COMMENT 'Monto neto REAL que la plataforma pagará',
+  `user_amount` decimal(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Lo que pagó el cliente final en la app',
+  `payout_amount` decimal(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Monto neto REAL que la plataforma pagará',
   `marketplace_fee` decimal(12,2) DEFAULT 0.00 COMMENT 'Comisión retenida por la app',
   `delivery_fee` decimal(12,2) DEFAULT 0.00 COMMENT 'Costo de envío cobrado por la app',
   -- Datos del Cliente y Repartidor (Volátiles / No persistentes en clientes ERP)
@@ -239,13 +232,15 @@ CREATE TABLE `order_items` (
   `status_id` int(10) UNSIGNED NOT NULL COMMENT 'Estado del registro: 6=pending, 8=delivered, 9=cancelled, 10=returned',
   `quantity` decimal(10,2) NOT NULL COMMENT 'Cantidad',
   `unitary` decimal(10,2) NOT NULL COMMENT 'Precio unitario',
-  `discount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Descuento aplicado',
+  `discount` decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Descuento aplicado',
   `amount` decimal(10,2) NOT NULL COMMENT 'Total',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `delivery_at` timestamp NULL COMMENT 'Fecha de entrega',
   PRIMARY KEY (`id`),
-  KEY `fk_orderitems_order` (`order_id`),
-  KEY `fk_orderitems_product` (`product_id`)
+  KEY `idx_orderitems_order` (`order_id`),
+  KEY `idx_orderitems_product` (`product_id`),
+  KEY `idx_orderitems_status` (`status_id`),
+  UNIQUE KEY `uk_order_item` (`order_id`, `item`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de items de órdenes';
 
 -- --------------------------------------------------------
@@ -270,7 +265,38 @@ CREATE TABLE `order_item_modifiers` (
 -- --------------------------------------------------------
 
 --
--- 21. Estructura de tabla para `production`
+-- Estructura de tabla para `order_payments`
+-- Registro de pagos de órdenes
+--
+
+CREATE TABLE `order_payments` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id` int(10) UNSIGNED NOT NULL COMMENT 'Orden',
+  `bill_index` int(10) UNSIGNED NOT NULL COMMENT 'Índice de la cuenta (corresponde con targe de order_items)',
+  `type` enum('global', 'split-person', 'split-equal') NOT NULL DEFAULT 'global' COMMENT 'Tipo de cuenta',
+  `shift_id` int(10) UNSIGNED NULL COMMENT 'Turno de caja',
+  `is_taxable` tinyint(1) DEFAULT 0 COMMENT 'Indica si la orden se factura',
+  `method_id` int(10) UNSIGNED NULL COMMENT 'Método de pago',
+  `discount` decimal(10,2) DEFAULT 0.00 COMMENT 'Monto de descuento aplicado a la cuenta',
+  `amount` decimal(10,2) NOT NULL COMMENT 'Monto',
+  `tip` decimal(10,2) DEFAULT 0.00 COMMENT 'Propina',
+  `reference` varchar(100) NULL COMMENT 'Referencia de pago',
+  `status_id` int(10) UNSIGNED NOT NULL DEFAULT 6 COMMENT 'Estado del registro: 6=pending, 7=paid, 9=cancelled, 10=returned',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `paid_at` timestamp NULL COMMENT 'Momento en que se realizó el pago',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_payments` (`order_id`, `bill_index`),
+  KEY `idx_order_payments_order` (`order_id`),
+  KEY `fk_order_payments_shift` (`shift_id`),
+  KEY `idx_order_payments_method` (`method_id`),
+  KEY `idx_order_payments_date` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro de pagos de órdenes';
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para `production`
 -- Registro productos elaborados en producción
 --
 CREATE TABLE `production` (
@@ -400,9 +426,7 @@ ALTER TABLE `orders`
   ADD CONSTRAINT `fk_order_channel` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_table` FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_order_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_order_shift` FOREIGN KEY (`shift_id`) REFERENCES `shifts` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_order_method` FOREIGN KEY (`method_id`) REFERENCES `payment_methods` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_order_paid` FOREIGN KEY (`paid_status`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_order_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `order_external_details`
 ALTER TABLE `order_external_details`
@@ -411,7 +435,15 @@ ALTER TABLE `order_external_details`
 -- Filtros para `order_items`
 ALTER TABLE `order_items`
   ADD CONSTRAINT `fk_order_items` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_items_product` FOREIGN KEY (`product_id`) REFERENCES `menu` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_items_product` FOREIGN KEY (`product_id`) REFERENCES `menu` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_items_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
+
+-- Filtros para `order_payments`
+ALTER TABLE `order_payments`
+  ADD CONSTRAINT `fk_order_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_order_payments_shift` FOREIGN KEY (`shift_id`) REFERENCES `shifts` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_order_payments_method` FOREIGN KEY (`method_id`) REFERENCES `payment_methods` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_order_payments_status` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`) ON UPDATE CASCADE;
 
 -- Filtros para `order_item_modifiers`
 ALTER TABLE `order_item_modifiers`

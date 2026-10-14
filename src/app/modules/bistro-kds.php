@@ -57,9 +57,7 @@
 <template id="bistro-kds-template-order">
     <div class="kds-order-card bg-slate-800 border-2 border-slate-700 rounded-2xl flex flex-col h-full overflow-hidden shadow-2xl relative w-[240px] sm:w-[260px] shrink-0 transition-all">
         <!-- Encabezado Estático de la Orden -->
-        <div class="kds-order-header p-1.5 bg-slate-850 border-b border-slate-700 flex justify-between items-center shrink-0 cursor-grab select-none relative overflow-hidden">
-            <div class="swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10 flex items-center justify-between px-3 font-bold text-xs text-white"></div>
-            
+        <div class="kds-order-header p-1.5 bg-slate-850 border-b border-slate-700 flex justify-between items-center shrink-0 select-none cursor-pointer">
             <div class="relative z-20">
                 <div class="flex items-center space-x-2">
                     <span class="kds-order-channel-badge text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700 text-indigo-300"></span>
@@ -84,17 +82,14 @@
             <!-- Subtarjetas de Personas se inyectan aquí -->
         </div>
 
-        <!-- Panel Flotante Estático de Confirmación de Acciones (Oculto por defecto) -->
+        <!-- Panel Flotante Estático Unificado de Confirmación (Oculto por defecto) -->
         <div class="kds-order-actions-bar hidden p-2 bg-slate-900 border-t border-slate-700 flex items-center justify-between shrink-0 z-30">
-            <span class="kds-actions-summary text-[11px] font-bold text-amber-400">0 marcados</span>
-            <div class="flex space-x-1.5">
-                <button class="btn-cancel-marked bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-bold transition">
-                    🗑️ Cancelar
-                </button>
-                <button class="btn-release-marked bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-bold transition">
-                    🚀 Liberar
-                </button>
-            </div>
+            <button class="btn-cancel-marked bg-slate-500 hover:bg-slate-400 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-md">
+                ✗ Cancelar
+            </button>
+            <button class="btn-execute-marked bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-md">
+                ✓ Confirmar
+            </button>
         </div>
     </div>
 </template>

@@ -7,15 +7,15 @@ namespace App\Enums;
  */
 class Channel
 {
-    public const APP = 5;
-    public const DIDI = 9;
-    public const KIOSK = 6;
+    public const APP = 8;
+    public const DIDI = 4;
+    public const KIOSK = 9;
     public const LOCAL = 1;
-    public const PHONE = 2;
-    public const RAPPI = 7;
-    public const UBER = 8;
-    public const WA = 3;
-    public const WEB = 4;
+    public const PHONE = 5;
+    public const RAPPI = 2;
+    public const UBER = 3;
+    public const WA = 6;
+    public const WEB = 7;
 
     /**
      * Devuelve el catálogo completo en array [id => nombre]

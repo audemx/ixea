@@ -6,21 +6,24 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Core\Config;
 use App\Database\Connection;
-use App\Core\Security;
 use App\Models\User;
-use App\Models\RolePermission;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-// 1. Inicializar sesión y base de datos
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Inicializa configuración y sesión
+Config::init();
 
+// Conexión a la base de datos
 Connection::boot();
 
 // Redirigir si ya existe sesión activa
 if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'redirect' => '/dashboard']);
+        exit;
+    }
     header("Location: /dashboard");
     exit;
 }
@@ -36,7 +39,8 @@ if (!isset($_SESSION['login_attempts'])) {
 }
 
 if ($_SESSION['login_attempts'] >= $intentos_maximos) {
-    $segundos_restantes = ($_SESSION['last_attempt_time'] + $tiempo_bloqueo) - time();
+    $segundos_restantes = ($_SESSION['last_attempt_time'] +$tiempo_bloqueo) - time();
+
     if ($segundos_restantes > 0) {
         $minutos = ceil($segundos_restantes / 60);
         $mensaje = "Demasiados intentos fallidos. Bloqueado por {$minutos} min.";
@@ -45,63 +49,116 @@ if ($_SESSION['login_attempts'] >= $intentos_maximos) {
     }
 }
 
-// 3. Generar token de estado CSRF
+// Generar token de estado CSRF
 if (empty($_SESSION['oauth_state'])) {
     $_SESSION['oauth_state'] = bin2hex(random_bytes(32));
 }
 
-// Muestra de errores por querystring
-if (isset($_GET['error'])) {
-    $mensaje = htmlspecialchars($_GET['error'], ENT_QUOTES, 'UTF-8');
-}
+// 4. Procesar Login Tradicional via Fetch (JSON)
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    header('Content-Type: application/json');
 
-// 4. Procesar Login Tradicional mediante Modelos Eloquent
-if ($_SERVER["REQUEST_METHOD"] === "POST" && $_SESSION['login_attempts'] < $intentos_maximos) {
+    if ($_SESSION['login_attempts'] >= $intentos_maximos) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Demasiados intentos fallidos. Sistema bloqueado temporalmente.',
+            'attempts_exceeded' => true
+        ]);
+        exit;
+    }
+
+    // Leemos directo de $_POST ya que JavaScript envía FormData
     $email_entered = trim($_POST['email'] ?? '');
     $password_entered = $_POST['password'] ?? '';
     
     try {
-        // Carga del usuario con sus relaciones 'role' y 'status' mediante el Modelo
+        if (empty($email_entered) || empty($password_entered)) {
+            throw new \Exception("Por favor, ingrese correo y contraseña.");
+        }
+
+        // 1. Obtener dominio y buscar Tenant en 'ixea_db'
+        $parts = explode('@', $email_entered);
+        if (count($parts) !== 2) {
+            throw new \Exception("Formato de correo electrónico no válido.");
+        }
+
+        $domain = strtolower(trim($parts[1]));
+
+        // Consultamos directamente en la base central usando la conexión 'default' (ixea_db)
+        $tenant = Capsule::connection('default')->table('tenants')
+            ->where('domain', $domain)
+            ->where('is_active', 1)
+            ->first();
+
+        $business = Capsule::connection('default')->table('tenants_info')
+            ->where('tenant_id', $tenant->id)
+            ->first();
+
+        if (!$tenant) {
+            throw new \Exception("El dominio no está asociado a ninguna unidad activa.");
+        }
+
+        // 2. Inyectar la configuración de la BD del Tenant
+        Connection::connectToTenant($tenant);
+
+        // 3. Buscar usuario y validar usando la BD del Tenant
         $user = User::with(['role', 'status'])
             ->where('email', $email_entered)
             ->first();
 
         if ($user && (int)$user->status_id === 1) {
-            if (password_verify($password_entered, $user->password_hash)) {
+            if (password_verify($password_entered, $user->password)) {
                 
                 // Regenerar ID de sesión por seguridad
                 session_regenerate_id(true);
                 $_SESSION['login_attempts'] = 0;
+                $_SESSION['tenant']         = $tenant;
                 $_SESSION['user_id']        = (int)$user->id;
                 $_SESSION['role_id']        = (int)$user->role_id;
                 $_SESSION['user_name']      = $user->first_name;
+                $_SESSION['full_name']      = $user->first_name . ' ' . $user->last_name;
                 $_SESSION['role_name']      = $user->role ? $user->role->name : 'Usuario';
                 $_SESSION['user_email']     = $user->email;
                 $_SESSION['fingerprint']    = md5($_SERVER['HTTP_USER_AGENT'] . "IXEA_SALT_2026");
+
+                $_SESSION['business']       = [
+                    'name'          => $business->name,
+                    'slogan'        => $business->slogan,
+                    'rfc'           => $business->rfc,
+                    'address'       => $business->address,
+                    'phone'         => $business->phone,
+                    'whatsapp'      => $business->whatsapp,
+                    'website'       => $business->website,
+                    'legal_owner'   => $business->legal_owner
+                ];
                 
-                if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
-                    header("Location: /dashboard");
-                    exit;
-                }
+                echo json_encode([
+                    'success' => true,
+                    'redirect' => '/dashboard'
+                ]);
+                exit;
 
             } else {
                 $_SESSION['login_attempts']++;
                 $_SESSION['last_attempt_time'] = time();
-                $mensaje = "Contraseña incorrecta.";
+                throw new \Exception("Contraseña incorrecta.");
             }
         } elseif ($user && (int)$user->status_id !== 1) {
-            $mensaje = "Su cuenta está suspendida o inactiva. Contacte al administrador.";
+            throw new \Exception("Su cuenta está suspendida.");
         } else {
             $_SESSION['login_attempts']++;
             $_SESSION['last_attempt_time'] = time();
-            $mensaje = "El correo electrónico no se encuentra registrado.";
+            throw new \Exception("El usuario {$email_entered} no se encuentra registrado.");
         }
         
     } catch (\Exception $e) {
         error_log("Error de login en DB: " . $e->getMessage());
-        // Descomentar la siguiente línea en desarrollo local para ver el mensaje de error exacto:
-        // $mensaje = "Error DB: " . $e->getMessage();
-        $mensaje = "Hubo un error en el sistema. Intente más tarde.";
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'attempts_exceeded' => ($_SESSION['login_attempts'] >=$intentos_maximos)
+        ]);
+        exit;
     }
 }
 
@@ -203,28 +260,30 @@ $isotypePath = __DIR__ . '/../views/includes/isotype.php';
                 <div class="card shadow-lg border-0 bg-transparent">
                     <div class="card-body p-4">
 
-                        <?php if (!empty($mensaje)): ?>
-                            <div class="alert alert-danger text-center p-2 mb-3" role="alert" style="border-radius: 10px;">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                <small style="font-weight: 600;"><?php echo $mensaje; ?></small>
-                            </div>
-                        <?php endif; ?>
+                        <!-- Contenedor dinámico de alertas -->
+                        <div id="alert-container">
+                            <?php if (!empty($mensaje)): ?>
+                                <div class="alert alert-danger text-center p-2 mb-3" role="alert" style="border-radius: 10px;">
+                                    <small style="font-weight: 600;"><?php echo $mensaje; ?></small>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                        <form method="POST" action="/eros/login" autocomplete="off">
+                        <form id="loginForm" method="POST" action="/" autocomplete="off">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo electrónico</label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="correo@ejemplo.com" required <?php echo ($_SESSION['login_attempts'] >= $intentos_maximos) ? 'disabled' : ''; ?>>
+                                       placeholder="correo@ejemplo.com" required <?php echo ($_SESSION['login_attempts'] >=$intentos_maximos) ? 'disabled' : ''; ?>>
                             </div>
                             
                             <div class="mb-4">
                                 <label for="password" class="form-label">Contraseña</label>
                                 <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="••••••••" required <?php echo ($_SESSION['login_attempts'] >= $intentos_maximos) ? 'disabled' : ''; ?>>
+                                       placeholder="••••••••" required <?php echo ($_SESSION['login_attempts'] >=$intentos_maximos) ? 'disabled' : ''; ?>>
                             </div>
                             
                             <div class="d-grid pb-3">
-                                <button type="submit" class="btn btn-primary btn-lg" <?php echo ($_SESSION['login_attempts'] >= $intentos_maximos) ? 'disabled' : ''; ?>>
+                                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" <?php echo ($_SESSION['login_attempts'] >=$intentos_maximos) ? 'disabled' : ''; ?>>
                                     Acceder
                                 </button>
                             </div>
@@ -253,5 +312,53 @@ $isotypePath = __DIR__ . '/../views/includes/isotype.php';
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('submitBtn');
+        const alertContainer = document.getElementById('alert-container');
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verificando...';
+        alertContainer.innerHTML = ''; // Limpiar errores previos
+
+        try {
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect;
+            } else {
+                // Mostrar alerta visual dinámica sin recargar la página
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger text-center p-2 mb-3" role="alert" style="border-radius: 10px;">
+                        <small style="font-weight: 600;">${data.message}</small>
+                    </div>
+                `;
+                submitBtn.disabled = data.attempts_exceeded;
+                submitBtn.textContent = 'Acceder';
+            }
+        } catch (error) {
+            console.error('Error en el login:', error);
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger text-center p-2 mb-3" role="alert" style="border-radius: 10px;">
+                    <small style="font-weight: 600;">Ocurrió un error inesperado. Contacte a Soporte.</small>
+                </div>
+            `;
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Acceder';
+        }
+    });
+    </script>
 </body>
 </html>

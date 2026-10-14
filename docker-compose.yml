@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    container_name: ixea_web
     ports:
       - "8000:80"
     volumes:
@@ -10,23 +11,27 @@ services:
       - ./src/app:/var/www/app
     depends_on:
       - db
+    networks:
+      - ixea_network
 
   # MariaDB 11.8
   db:
     image: mariadb:11.8
     restart: always
+    container_name: ixea_db
     environment:
-      MARIADB_ROOT_PASSWORD: ixea_1234.
       MARIADB_DATABASE: ixea_db
-      MARIADB_USER: ixea_db
-      MARIADB_PASSWORD: ixea_1234.
+      MARIADB_ROOT_PASSWORD: ixea_1234.
     ports:
       - "3306:3306"
     volumes:
       - mariadb:/var/lib/mysql
+    networks:
+      - ixea_network
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
+    container_name: ixea_phpmyadmin
     platform: linux/amd64
     ports:
       - "8080:80"
@@ -35,6 +40,12 @@ services:
       MYSQL_ROOT_PASSWORD: ixea_1234.
     depends_on:
       - db
+    networks:
+      - ixea_network
 
 volumes:
   mariadb:
+
+networks:
+  ixea_network:
+    driver: bridge

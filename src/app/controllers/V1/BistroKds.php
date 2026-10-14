@@ -23,11 +23,11 @@ class BistroKds extends Controller
     {
         try {
             $user = Security::authorize();
-            $userId = (int) ($user['userId'] ?? null);
+            $userId = isset($user['userId']) ? (int) $user['userId'] : null;
 
-            if (is_null($userId)) {
+            if ($userId === null) {
                 $message = 'Error de autorización.';
-                $this->sysLog(0, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::STATIONS, details: $message);
+                $this->sysLog(0, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::STATIONS, details: 'BistroKds.getStations: ' . $message);
                 $this->error($message, 400);
             }
 
@@ -55,7 +55,7 @@ class BistroKds extends Controller
                 ];
             }
 
-            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::STATIONS, details: 'Estaciones KDS obtenidas exitosamente');
+            $this->sysLog($userId, SysAction::READ, statusId: Status::SUCCESS, tableId: SysTable::STATIONS, details: 'BistroKds.getStations: Successful');
 
             $this->jsonResponse([
                 'success' => true,
@@ -77,11 +77,12 @@ class BistroKds extends Controller
     {
         try {
             $user = Security::authorize();
-            $userId = (int) ($user['userId'] ?? null);
+            $userId = isset($user['userId']) ? (int) $user['userId'] : null;
 
-            if (is_null($userId)) {
-                $this->sysLog(0, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::ORDERS, details: 'Error de autorización');
-                $this->error('Debes iniciar sesión para realizar esta acción.', 400);
+            if ($userId === null) {
+                $message = 'Error de autorización.';
+                $this->sysLog(0, SysAction::READ, statusId: Status::ERROR, tableId: SysTable::ORDERS, details: 'BistroKds.getOrders: ' . $message);
+                $this->error($message, 400);
             }
 
             $deliveryStatus = $this->getParam('deliveryStatus') ?? 'pending';
@@ -190,7 +191,7 @@ class BistroKds extends Controller
                 ];
             }
 
-            $this->sysLog($userId, SysAction::READ, Status::SUCCESS, SysTable::ORDERS, details: 'Comandas KDS obtenidas');
+            $this->sysLog($userId, SysAction::READ, Status::SUCCESS, SysTable::ORDERS, details: 'BistroKds.getOrders: Successful');
 
             $this->jsonResponse([
                 'success' => true,
@@ -212,7 +213,13 @@ class BistroKds extends Controller
     {
         try {
             $user = Security::authorize();
-            $userId = (int) ($user['userId'] ?? null);
+            $userId = isset($user['userId']) ? (int) $user['userId'] : null;
+
+            if ($userId === null) {
+                $message = 'Error de autorización.';
+                $this->sysLog(0, SysAction::UPDATE, statusId: Status::ERROR, tableId: SysTable::ORDER_ITEMS, details: 'BistroKds.releaseItems: ' . $message);
+                $this->error($message, 400);
+            }
 
             $data    = $this->getJsonBody();
             $orderId = (int) ($data['order_id'] ?? 0);
@@ -232,7 +239,7 @@ class BistroKds extends Controller
                     ]);
             });
 
-            $this->sysLog($userId, SysAction::UPDATE, Status::SUCCESS, SysTable::ORDERS, $orderId, 'Ítems entregados/liberados en KDS');
+            $this->sysLog($userId, SysAction::UPDATE, Status::SUCCESS, SysTable::ORDERS, $orderId, 'BistroKds.releaseItems: Successful');
 
             $this->jsonResponse([
                 'success' => true,
@@ -252,7 +259,13 @@ class BistroKds extends Controller
     {
         try {
             $user = Security::authorize();
-            $userId = (int) ($user['userId'] ?? null);
+            $userId = isset($user['userId']) ? (int) $user['userId'] : null;
+
+            if ($userId === null) {
+                $message = 'Error de autorización.';
+                $this->sysLog(0, SysAction::UPDATE, statusId: Status::ERROR, tableId: SysTable::ORDER_ITEMS, details: 'BistroKds.cancelItems: ' . $message);
+                $this->error($message, 400);
+            }
 
             $data    = $this->getJsonBody();
             $orderId = (int) ($data['order_id'] ?? 0);
@@ -270,7 +283,7 @@ class BistroKds extends Controller
                     ]);
             });
 
-            $this->sysLog($userId, SysAction::DELETE, Status::SUCCESS, SysTable::ORDERS, $orderId, 'Ítems cancelados desde KDS');
+            $this->sysLog($userId, SysAction::UPDATE, Status::SUCCESS, SysTable::ORDER_ITEMS, $orderId, 'BistroKds.cancelItems: Successful');
 
             $this->jsonResponse([
                 'success' => true,

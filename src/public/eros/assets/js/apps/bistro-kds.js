@@ -296,11 +296,21 @@ window.BistroKdsApp = {
         container.innerHTML = html;
     },
 
-    /** Genera todas las tarjetas de pedidos */
+    /** Genera todas las tarjetas de pedidos preservando el scroll actual */
     render: function () {
         const container = document.getElementById('bistro-kds-cards');
         const template = document.getElementById('bistro-kds-template-order');
         if (!container || !template) return;
+
+        // 1. Guardar la posición de scroll de cada cuerpo de tarjeta antes de redibujar
+        const scrollPositions = {};
+        container.querySelectorAll('.kds-order-card').forEach(card => {
+            const orderId = card.dataset.orderId;
+            const body = card.querySelector('.kds-order-body');
+            if (orderId && body) {
+                scrollPositions[orderId] = body.scrollTop;
+            }
+        });
 
         container.innerHTML = '';
 
@@ -338,9 +348,9 @@ window.BistroKdsApp = {
                 remEl.className = 'kds-order-remaining text-[14px] font-mono font-bold text-emerald-600';
             }
 
-            // Bind Swipe Header Orden
+            // Click / Doble Click en Header Orden
             const orderHeader = card.querySelector('.kds-order-header');
-            this.bindSwipeEvent(orderHeader, (dir) => this.markOrder(order.order_id, dir));
+            this.bindClickEvents(orderHeader, (action) => this.markOrder(order.order_id, action));
 
             // Render Subtarjetas Personas
             const body = card.querySelector('.kds-order-body');
@@ -349,32 +359,41 @@ window.BistroKdsApp = {
                 body.appendChild(personEl);
             });
 
-            // Acciones de Confirmación
+            // Acción Unificada de Confirmación
             const btnCancel = card.querySelector('.btn-cancel-marked');
-            const btnRelease = card.querySelector('.btn-release-marked');
-
-            btnCancel.onclick = () => this.executeActionOnMarked(order.order_id, 'cancel');
-            btnRelease.onclick = () => this.executeActionOnMarked(order.order_id, 'release');
+            const btnExecute = card.querySelector('.btn-execute-marked');
+            btnCancel.onclick = () => this.cancelAllMarkedActions(order.order_id);
+            btnExecute.onclick = () => this.executeAllMarkedActions(order.order_id);
 
             container.appendChild(clone);
+
+            // 2. Restaurar la posición de scroll exacta que tenía esta tarjeta
+            const newCard = container.querySelector(`.kds-order-card[data-order-id="${order.order_id}"]`);
+            if (newCard) {
+                const newBody = newCard.querySelector('.kds-order-body');
+                if (newBody && scrollPositions[order.order_id] !== undefined) {
+                    newBody.scrollTop = scrollPositions[order.order_id];
+                }
+            }
+
             this.updateActionToolbar(order.order_id);
         });
     },
 
+    /** Crea subtarjeta de persona */
     createPersonElement: function (orderId, person) {
         const div = document.createElement('div');
         div.className = 'kds-person-block bg-slate-900/90 border border-slate-700/80 rounded-xl p-2 space-y-1.5';
         div.dataset.personId = person.p_id;
 
         const header = document.createElement('div');
-        header.className = 'kds-person-header flex justify-between items-center text-xs pb-1 border-b border-slate-800 cursor-grab relative overflow-hidden select-none';
+        header.className = 'kds-person-header flex justify-between items-center text-xs pb-1 border-b border-slate-800 cursor-pointer select-none';
         header.innerHTML = `
-            <div class="swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10 flex items-center justify-between px-2 text-[10px] font-bold text-white"></div>
-            <span class="font-black text-indigo-300 z-20">${person.p_id === 0 ? '🍽️ Centro' : '👤 Persona ' + person.p_id}</span>
-            <span class="text-[10px] font-mono text-slate-400 z-20">${person.items.length} ítems</span>
+            <span class="font-black text-indigo-300">${person.p_id === 0 ? '🍽️ Centro' : '👤 Persona ' + person.p_id}</span>
+            <span class="text-[10px] font-mono text-slate-400">${person.items.length} ítems</span>
         `;
 
-        this.bindSwipeEvent(header, (dir) => this.markPerson(orderId, person.p_id, dir));
+        this.bindClickEvents(header, (action) => this.markPerson(orderId, person.p_id, action));
         div.appendChild(header);
 
         const itemsBox = document.createElement('div');
@@ -389,15 +408,17 @@ window.BistroKdsApp = {
         return div;
     },
 
+    /** Crea subtarjeta de item */
     createItemElement: function (orderId, item) {
         const itemDiv = document.createElement('div');
-        itemDiv.className = 'kds-item-card p-2 bg-slate-800 rounded-lg text-xs border border-slate-700 relative overflow-hidden cursor-grab select-none transition-all';
+        itemDiv.className = 'kds-item-card p-2 bg-slate-800 rounded-lg text-xs border border-slate-700 relative cursor-pointer select-none transition-all';
         itemDiv.dataset.itemId = item.item_id;
 
         const markState = this.markedItems[orderId]?.[item.item_id];
         let markBgClass = '';
-        if (markState === 'release') markBgClass = 'border-emerald-500 bg-emerald-950/40';
-        if (markState === 'cancel') markBgClass = 'border-rose-500 bg-rose-950/40';
+        // Colores mejorados con mayor contraste y brillo para fondo oscuro
+        if (markState === 'release') markBgClass = 'border-emerald-400 bg-emerald-900/60 shadow-[0_0_12px_rgba(52,211,153,0.3)]';
+        if (markState === 'cancel') markBgClass = 'border-rose-400 bg-rose-900/60 shadow-[0_0_12px_rgba(251,113,133,0.3)]';
 
         if (markBgClass) itemDiv.className += ` ${markBgClass}`;
 
@@ -405,16 +426,16 @@ window.BistroKdsApp = {
         const timeClass = item.remaining < 0 ? 'text-rose-400 font-bold' : 'text-emerald-400';
 
         itemDiv.innerHTML = `
-            <div class="swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10 flex items-center justify-between px-2 font-bold text-[10px] text-white"></div>
-            <div class="flex justify-between items-start font-bold text-white z-20 relative">
+            <div class="flex justify-between items-start font-bold text-white relative">
                 <span>${item.quantity}x ${item.name}</span>
                 <span class="kds-item-timer font-mono text-end text-[10px] ${timeClass}">${formattedTime}</span>
             </div>
-            ${(item.modifiers || []).map(m => `<div class="text-[11px] text-amber-400 pl-2 z-20 relative">• ${m}</div>`).join('')}
-            ${item.notes ? `<div class="text-[10px] text-amber-300 italic mt-0.5 z-20 relative">📝 ${item.notes}</div>` : ''}
+            ${(item.modifiers || []).map(m => `<div class="text-[11px] text-amber-400 pl-2">• ${m}</div>`).join('')}
+            ${item.notes ? `<div class="text-[10px] text-amber-300 italic mt-0.5">📝 ${item.notes}</div>` : ''}
         `;
 
-        this.bindSwipeEvent(itemDiv, (dir) => this.markItem(orderId, item.item_id, dir));
+        // Pasamos el itemId de forma explícita al callback
+        this.bindClickEvents(itemDiv, (action) => this.markItem(orderId, item.item_id, action));
         return itemDiv;
     },
 
@@ -464,7 +485,7 @@ window.BistroKdsApp = {
             ? IxeaData.timestamps['bistro-kds']['get-orders']
             : null;
 
-        if (latestHash && latestHash !== this.orderHash) {
+        if (latestHash !== this.orderHash) {
             // Si el usuario tiene ítems marcados o ya hay un contador en marcha, ignoramos la activación
             if (this.hasUserInteractions() || this.autoRender !== null) {
                 return;
@@ -540,158 +561,158 @@ window.BistroKdsApp = {
     },
 
     // ==========================================
-    // GESTIÓN DE GESTOS SWIPE (ADR-013)
+    // GESTIÓN DE SELECCIÓN POR TOQUES (1 clic = release, 2 clics = cancel)
     // ==========================================
-    bindSwipeEvent: function (element, onSwipe) {
-        let startX = 0;
-        let isSwiping = false;
-        const indicator = element.querySelector('.swipe-indicator');
+    bindClickEvents: function (element, callback) {
+        let clickTimeout = null;
 
-        const handleStart = (e) => {
-            this.cancelAutoRender();
-            startX = e.touches ? e.touches[0].clientX : e.clientX;
-            isSwiping = true;
-        };
+        element.addEventListener('click', (e) => {
+            // Evitar que reaccione si hace clic en botones internos
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
 
-        const handleMove = (e) => {
-            if (!isSwiping) return;
-            const currentX = e.touches ? e.touches[0].clientX : e.clientX;
-            const diffX = currentX - startX;
-
-            if (indicator) {
-                if (diffX > 20) {
-                    indicator.textContent = '🚀 LIBERAR';
-                    indicator.className = 'swipe-indicator absolute inset-0 bg-emerald-600/80 z-10 flex items-center justify-start pl-3 font-bold text-xs text-white';
-                } else if (diffX < -20) {
-                    indicator.textContent = '🗑️ CANCELAR';
-                    indicator.className = 'swipe-indicator absolute inset-0 bg-rose-600/80 z-10 flex items-center justify-end pr-3 font-bold text-xs text-white';
-                } else {
-                    indicator.className = 'swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10';
-                    indicator.textContent = '';
-                }
+            if (clickTimeout !== null) {
+                // Segundo clic detectado dentro de la ventana de tiempo -> CANCELAR
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+                callback('cancel');
+            } else {
+                // Primer clic -> Esperar por si hay un segundo clic, si no, ejecutar LIBERAR
+                clickTimeout = setTimeout(() => {
+                    clickTimeout = null;
+                    callback('release');
+                }, 280); // 280ms ventana estándar para doble toque
             }
-        };
-
-        const handleEnd = (e) => {
-            if (!isSwiping) return;
-            isSwiping = false;
-            const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-            const diffX = endX - startX;
-
-            if (indicator) {
-                indicator.className = 'swipe-indicator absolute inset-0 bg-transparent transition-colors pointer-events-none z-10';
-                indicator.textContent = '';
-            }
-
-            if (diffX > 60) {
-                onSwipe('right');
-            } else if (diffX < -60) {
-                onSwipe('left');
-            }
-        };
-
-        element.addEventListener('touchstart', handleStart, { passive: true });
-        element.addEventListener('touchmove', handleMove, { passive: true });
-        element.addEventListener('touchend', handleEnd);
-        element.addEventListener('mousedown', handleStart);
-        element.addEventListener('mousemove', handleMove);
-        element.addEventListener('mouseup', handleEnd);
+        });
     },
 
-    // Lógica de marcado multinivel
-    markItem: function (orderId, itemId, direction) {
+    markItem: function (orderId, itemId, action) {
         if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
         const current = this.markedItems[orderId][itemId];
-        const target = direction === 'right' ? 'release' : 'cancel';
 
-        if (current === target) {
+        if (current === action) {
             delete this.markedItems[orderId][itemId];
         } else {
-            this.markedItems[orderId][itemId] = target;
+            this.markedItems[orderId][itemId] = action;
         }
 
         this.render();
     },
 
-    markPerson: function (orderId, personId, direction) {
+    markPerson: function (orderId, personId, action) {
         const order = this.orders.find(o => o.order_id === orderId);
         if (!order) return;
         const person = order.people.find(p => p.p_id === personId);
         if (!person) return;
 
         if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
-        const target = direction === 'right' ? 'release' : 'cancel';
 
         person.items.forEach(item => {
-            this.markedItems[orderId][item.item_id] = target;
+            const current = this.markedItems[orderId][item.item_id];
+            if (current === action) {
+                delete this.markedItems[orderId][item.item_id];
+            } else {
+                this.markedItems[orderId][item.item_id] = action;
+            }
         });
 
         this.render();
     },
 
-    markOrder: function (orderId, direction) {
+    markOrder: function (orderId, action) {
         const order = this.orders.find(o => o.order_id === orderId);
         if (!order) return;
 
         if (!this.markedItems[orderId]) this.markedItems[orderId] = {};
-        const target = direction === 'right' ? 'release' : 'cancel';
 
         order.people.forEach(p => {
             p.items.forEach(item => {
-                this.markedItems[orderId][item.item_id] = target;
+                const current = this.markedItems[orderId][item.item_id];
+                if (current === action) {
+                    delete this.markedItems[orderId][item.item_id];
+                } else {
+                    this.markedItems[orderId][item.item_id] = action;
+                }
             });
         });
 
         this.render();
     },
 
+    /** Actualiza la barra de acciones de la comanda */
     updateActionToolbar: function (orderId) {
         const card = document.querySelector(`.kds-order-card[data-order-id="${orderId}"]`);
         if (!card) return;
 
         const toolbar = card.querySelector('.kds-order-actions-bar');
-        const summary = card.querySelector('.kds-actions-summary');
+        const btnExecute = card.querySelector('.btn-execute-marked');
         const orderMarks = this.markedItems[orderId] || {};
         const count = Object.keys(orderMarks).length;
 
         if (count > 0) {
             toolbar.classList.remove('hidden');
-            summary.textContent = `${count} marcado(s)`;
+            btnExecute.textContent = `✓ Confirmar (${count})`;
         } else {
             toolbar.classList.add('hidden');
         }
     },
 
-    executeActionOnMarked: async function (orderId, action) {
+    /** Cancela todas las acciones marcadas */
+    cancelAllMarkedActions: async function (orderId) {
         const orderMarks = this.markedItems[orderId] || {};
-        const itemIds = Object.keys(orderMarks).filter(id => orderMarks[id] === action);
+        const releaseIds = Object.keys(orderMarks).filter(id => orderMarks[id] === 'release');
+        const cancelIds = Object.keys(orderMarks).filter(id => orderMarks[id] === 'cancel');
 
-        if (itemIds.length === 0) {
-            IxeaComponents.showAlert({ text: 'No hay ítems marcados para esta acción', icon: 'info' });
+        if (releaseIds.length === 0 && cancelIds.length === 0) {
+            IxeaComponents.showAlert({ text: 'No hay ítems marcados en esta comanda', icon: 'info' });
+            return;
+        }
+
+        this.markedItems[orderId] = {};
+        this.render();
+    },
+
+    /**
+     * Ejecuta todas las acciones marcadas (liberaciones, cancelaciones o mezcla de ambas) con un solo botón
+     */
+    executeAllMarkedActions: async function (orderId) {
+        const orderMarks = this.markedItems[orderId] || {};
+        const releaseIds = Object.keys(orderMarks).filter(id => orderMarks[id] === 'release');
+        const cancelIds = Object.keys(orderMarks).filter(id => orderMarks[id] === 'cancel');
+
+        if (releaseIds.length === 0 && cancelIds.length === 0) {
+            IxeaComponents.showAlert({ text: 'No hay ítems marcados en esta comanda', icon: 'info' });
             return;
         }
 
         try {
-            IxeaComponents.showLoading({ text: action === 'release' ? 'Liberando ítems...' : 'Cancelando ítems...' });
+            IxeaComponents.showLoading({ text: 'Procesando acciones en comanda...' });
 
-            const endpoint = action === 'release' ? '/api/v1/bistro-kds/release-items' : '/api/v1/bistro-kds/cancel-items';
-            const res = await IxeaBridge.post(endpoint, {
-                order_id: orderId,
-                item_ids: itemIds
-            });
+            // Ejecutar liberaciones si las hay
+            if (releaseIds.length > 0) {
+                const resRelease = await IxeaBridge.post('/api/v1/bistro-kds/release-items', {
+                    order_id: orderId,
+                    item_ids: releaseIds
+                });
+                if (!resRelease.success) throw new Error(resRelease.message || 'Error al liberar ítems');
+            }
+
+            // Ejecutar cancelaciones si las hay
+            if (cancelIds.length > 0) {
+                const resCancel = await IxeaBridge.post('/api/v1/bistro-kds/cancel-items', {
+                    order_id: orderId,
+                    item_ids: cancelIds
+                });
+                if (!resCancel.success) throw new Error(resCancel.message || 'Error al cancelar ítems');
+            }
 
             IxeaComponents.hideLoading();
+            delete this.markedItems[orderId];
+            IxeaComponents.showAlert({ text: 'Acciones aplicadas exitosamente', icon: 'success', timer: 1200 });
+            this.fetchOrders();
 
-            if (res.success) {
-                delete this.markedItems[orderId];
-                IxeaComponents.showAlert({ text: 'Operación realizada exitosamente', icon: 'success', timer: 1200 });
-                this.fetchOrders();
-            } else {
-                throw new Error(res.message);
-            }
         } catch (err) {
             IxeaComponents.hideLoading();
-            IxeaComponents.showAlert({ text: err.message || 'Error al procesar acción', icon: 'error' });
+            IxeaComponents.showAlert({ text: err.message || 'Error al procesar las acciones', icon: 'error' });
         }
     }
 };
